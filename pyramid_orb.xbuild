@@ -1,0 +1,20 @@
+# YAML builder definition
+type: PackageBuilder
+
+# define the python location
+package:
+    name: pyramid_orb
+    path: ./src
+
+# define global settings
+settings:
+    distributionName: projex_orb
+    company: Projex Software
+    companyUrl: http://www.projexsoftware.com
+
+# define the path options
+paths:
+    buildPath: ./.build/{platform}
+    distributionPath: ./.dist/{platform}
+    outputPath: ./bin
+
