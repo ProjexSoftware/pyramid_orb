@@ -1,1 +1,6 @@
 /src/pyramid_orb/*.pyc
+/.build
+/bin
+/src/build
+/src/dist
+/src/pyramid_orb.egg-info
