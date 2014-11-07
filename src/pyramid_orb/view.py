@@ -42,6 +42,10 @@ class orb_config(object):
 
         return view_config(**new_settings)
 
+    def rest(self, **settings):
+        settings['renderer'] = 'string'  # use the projex.text.jsonify method
+        return self(**settings)
+
     def model(self):
         return orb.system.model(self.__model_name)
 
