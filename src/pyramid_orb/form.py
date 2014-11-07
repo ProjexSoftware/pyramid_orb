@@ -2,7 +2,6 @@ import logging
 
 from webhelpers.html import tags
 from webhelpers.html.builder import HTML
-
 from pyramid.renderers import render
 
 log = logging.getLogger(__name__)
