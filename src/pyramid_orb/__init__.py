@@ -22,7 +22,10 @@ __email__ = 'team@projexsoftware.com'
 __depends__ = []
 __major__ = 1
 __minor__ = 1
-__revision__ = 0
+__revision__ = 1
 
 __version_info__ = (__major__, __minor__, __revision__)
 __version__ = '%s.%s' % (__major__, __minor__)
+
+def includeme(config):
+    config.add_renderer('orb_json', factory='pyramid_orb.renderer.orb_json_renderer_factory')
