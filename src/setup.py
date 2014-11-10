@@ -10,10 +10,9 @@ except IOError:
     README = pyramid_orb.__doc__
 
 try:
-    VERSION = pyramid_orb.__version__
+    VERSION = pyramid_orb.__version__ + '.{0}'.format(pyramid_orb.__revision__)
 except AttributeError:
-    VERSION = '1.0'
-
+    VERSION = '1.0.0'
 try:
     REQUIREMENTS = pyramid_orb.__depends__
 except AttributeError:
