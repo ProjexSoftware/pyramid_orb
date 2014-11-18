@@ -1,6 +1,12 @@
 import orb
 from orb import Query as Q
 
+def collect_params(request):
+    try:
+        return dict(request.json_body)
+    except ValueError:
+        return dict(request.params)
+
 def collect_query_info(model, request):
     """
     Processes the inputed request object for search terms and parameters.
@@ -9,10 +15,7 @@ def collect_query_info(model, request):
 
     :return     (<orb.LookupOptions>, <orb.DatabaseOptions>, <str> search terms, <dict> orignal options)
     """
-    try:
-        params = dict(request.json_body)
-    except ValueError:
-        params = dict(request.params)
+    params = collect_params(request)
 
     # generate a simple query object
     q_build = {col: params[col] for col in params if model.schema().column(col)}
@@ -26,4 +29,4 @@ def collect_query_info(model, request):
     lookup = orb.LookupOptions(**params)
 
     # returns the lookup, database options, search terms and original options
-    return {'lookup': lookup, 'options': db_options, 'terms': terms, 'params': params}
+    return {'lookup': lookup, 'options': db_options, 'terms': terms}
