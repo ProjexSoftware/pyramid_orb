@@ -1,6 +1,6 @@
+import orb
 import projex.text
 
-from projex.text import nativestring as nstr
 from pyramid.view import view_config
 
 class orb_view_config(object):
@@ -47,6 +47,8 @@ class orb_view_config(object):
     # predicates
     def lookup_records(self, context, request):
         model = self.model()
+
+        # get the record information
         id = request.matchdict.get('id', request.params.get('id'))
         if id is not None:
             record = model(id)
@@ -55,6 +57,7 @@ class orb_view_config(object):
             request.record = record
         else:
             request.record = None
+
         return True
 
     # HTTP routes
@@ -124,56 +127,4 @@ class orb_view_config(object):
 
         return self(**settings)
 
-    # REST processing
-    def process_select(self, request):
-        try:
-            options = dict(request.json_body)
-        except ValueError:
-            options = dict(request.params)
 
-        options['inflated'] = False
-        try:
-            if 'terms' in options:
-                records = self.model().select().search(options.pop('terms')).all(**options)
-            else:
-                records = self.model().select(**options)
-
-            return {'status': 'success',
-                    'status_code': 200,
-                    'message': '',
-                    'data': records,
-                    'count': len(records)}
-
-        except StandardError as err:
-            return {'status': 'error',
-                    'status_code': 500,
-                    'message': nstr(err),
-                    'data': [],
-                    'count': 0}
-
-    def process_get(self, request):
-        try:
-            options = dict(request.json_body)
-        except ValueError:
-            options = dict(request.params)
-
-        options['inflated'] = False
-
-        try:
-            return {'status': 'success',
-                    'status_code': 200,
-                    'message': '',
-                    'data': request.record.recordValues(),
-                    'count': 1}
-        except KeyError as err:
-            return {'status': 'error',
-                    'status_code': 500,
-                    'message': 'Invalid url -- no ID was supplied.',
-                    'data': None,
-                    'count': 0}
-        except StandardError as err:
-            return {'status': 'error',
-                    'status_code': 500,
-                    'message': nstr(err),
-                    'data': None,
-                    'count': 0}
