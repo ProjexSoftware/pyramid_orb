@@ -25,7 +25,7 @@ setup(
     author_email = 'team@projexsoftware.com',
     maintainer = 'Projex Software',
     maintainer_email = 'team@projexsoftware.com',
-    description = '''''',
+    description = 'Bindings for the pyramid webframework and the ORB database ORM library.',
     license = 'LGPL',
     keywords = '',
     url = 'http://www.projexsoftware.com',
