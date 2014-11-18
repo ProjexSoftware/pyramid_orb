@@ -24,6 +24,10 @@ def collect_query_info(model, request):
 
     # create the lookup information
     params.setdefault('inflated', False)
+
+    if 'columns' in params:
+        params['columns'] = params['columns'].split(',')
+
     terms = params.pop('terms', '')
     db_options = orb.DatabaseOptions(**params)
     lookup = orb.LookupOptions(**params)

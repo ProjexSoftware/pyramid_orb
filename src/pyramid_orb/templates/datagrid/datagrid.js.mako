@@ -14,7 +14,14 @@
             },
             "rowCallback" : function(nRow) { helper.createExpandIcon(nRow); },
             "drawCallback" : function(oSettings) { helper.respond(); },
-            "ajax": "${grid.datasource()}",
+            "ajax": function (data, callback, settings) {
+                $.ajax({
+                    url: "${grid.datasource()}",
+                    success: function (data, status, xhr) {
+                        callback({data: data});
+                    }
+                });
+            },
             "columns": [
             % for column in grid.columns():
                 {"data": "${column.name()}"},
