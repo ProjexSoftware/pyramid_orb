@@ -51,10 +51,7 @@ class orb_view_config(object):
         # get the record information
         id = request.matchdict.get('id', request.params.get('id'))
         if id is not None:
-            record = model(id)
-            if not record.isRecord():
-                raise StandardError('Record not found: {0}({1})'.format(self.__model.schema().name(), id))
-            request.record = record
+            request.record = lambda: model(id)
         else:
             request.record = None
 
