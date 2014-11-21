@@ -24,7 +24,7 @@
             },
             "columns": [
             % for column in grid.columns():
-                {"data": "${column.name()}"},
+                {"data": "${column.fieldName()}"},
             % endfor
             ],
             ${grid.javascriptOptions()|n}
