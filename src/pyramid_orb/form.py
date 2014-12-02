@@ -1,5 +1,6 @@
 import logging
 
+from orb import errors
 from webhelpers.html import tags
 from webhelpers.html.builder import HTML
 from pyramid.renderers import render
@@ -30,11 +31,11 @@ class OrbForm(object):
         attrs.setdefault('method', self.method())
         return tags.form(url, **attrs)
 
-    def commit(self, params=None):
-        if not params:
-            params = self.submittedValues()
+    def commit(self, values=None):
+        if not values:
+            values = self.submittedValues()
 
-        self.record().setRecordValues(**params)
+        self.record().update(**values)
         return self.record().commit()
 
     def checkbox(self, name, value="1", checked=False, label=None, id=None, **attrs):
@@ -96,7 +97,7 @@ class OrbForm(object):
 
     def radio(self, name, value=None, checked=False, id=None, **attrs):
         checked = self.value(name) == value or checked
-        return tags.radio(name, value, checked, label, **attrs)
+        return tags.radio(name, value, checked, **attrs)
 
     def record(self):
         return self._record
@@ -113,7 +114,20 @@ class OrbForm(object):
         else:
             params = self._request.params
 
-        return params
+        # extract the values from the inputed string
+        schema = self.record().schema()
+        values = {}
+        for k, v in params.items():
+            col = schema.column(k)
+            if not col:
+                continue
+
+            if type(v) in (str, unicode) and not col.isString():
+                values[col.name()] = col.valueFromString(v)
+            else:
+                values[col.name()] = v
+
+        return values
 
     def select(self, name, options, selected=None, id=None, **attrs):
         return tags.select(name,
@@ -146,7 +160,7 @@ class OrbForm(object):
     def value(self, name, default=None):
         return self._record.recordValue(name, default=default)
 
-    def validate(self, force=False, params=None):
+    def validate(self, force=False, values=None):
         if self._validated:
             return not self.errors()
 
@@ -155,11 +169,14 @@ class OrbForm(object):
                 log.error('Invalid form submission, mismatched methods.')
                 return False
 
-        if params is None:
-            params = self.submittedValues()
+        if values is None:
+            values = self.submittedValues()
 
-        _, errors = self.record().validateValues(params, validateColumns=False, returnErrors=True)
-        self._errors.update(errors)
+        try:
+            self.record().validateRecord(overrides=values)
+        except errors.ValidationError as err:
+            self._errors[err.context] = str(err)
+
         self._validated = True
         return not self._errors
 

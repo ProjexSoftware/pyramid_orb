@@ -33,7 +33,8 @@ def collect_query_info(model, request):
         'start': int(params.pop('start')) if 'start' in params else None,
         'inflated': params.pop('inflated') == 'True' if 'inflated' in params else False,
         'expand': params.pop('expand').split(',') if 'expand' in params else None,
-        'order': [k.split(':') for k in params.pop('order').split(',')] if 'order' in params else None
+        'order': [k.split(':') for k in params.pop('order').split(',')] if 'order' in params else None,
+        'locale': params.pop('locale', orb.system.locale())
     }
 
     # generate a simple query object
