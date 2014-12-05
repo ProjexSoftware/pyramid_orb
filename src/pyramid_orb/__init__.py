@@ -22,7 +22,7 @@ __email__ = 'team@projexsoftware.com'
 __depends__ = []
 __major__ = 1
 __minor__ = 1
-__revision__ = 6
+__revision__ = 7
 
 __version_info__ = (__major__, __minor__, __revision__)
 __version__ = '%s.%s' % (__major__, __minor__)

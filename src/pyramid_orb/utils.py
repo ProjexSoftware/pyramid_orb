@@ -31,7 +31,7 @@ def collect_query_info(model, request):
         'columns': params.pop('columns').split(',') if 'columns' in params else None,
         'limit': int(params.pop('limit')) if 'limit' in params else None,
         'start': int(params.pop('start')) if 'start' in params else None,
-        'inflated': params.pop('inflated') == 'True' if 'inflated' in params else False,
+        'inflated': params.pop('inflated') == 'True' if 'inflated' in params else True,
         'expand': params.pop('expand').split(',') if 'expand' in params else None,
         'order': [k.split(':') for k in params.pop('order').split(',')] if 'order' in params else None,
         'locale': params.pop('locale', orb.system.locale())
