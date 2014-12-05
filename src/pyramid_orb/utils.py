@@ -2,6 +2,9 @@ import orb
 from orb import Query as Q
 
 def collect_params(request):
+    if type(request) == dict:
+        return request
+
     try:
         params = dict(request.json_body)
     except ValueError:
@@ -32,6 +35,8 @@ def collect_query_info(model, request):
         'limit': int(params.pop('limit')) if 'limit' in params else None,
         'start': int(params.pop('start')) if 'start' in params else None,
         'inflated': params.pop('inflated') == 'True' if 'inflated' in params else True,
+        'page': int(params.pop('page', -1)),
+        'pageSize': int(params.pop('pageSize', 0)),
         'expand': params.pop('expand').split(',') if 'expand' in params else None,
         'order': [k.split(':') for k in params.pop('order').split(',')] if 'order' in params else None,
         'locale': params.pop('locale', orb.system.locale())

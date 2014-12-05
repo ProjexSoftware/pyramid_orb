@@ -1,7 +1,7 @@
-import orb
 import projex.text
 
 from pyramid.view import view_config
+from .utils import collect_params, collect_query_info
 
 class orb_view_config(object):
     """
@@ -19,6 +19,7 @@ class orb_view_config(object):
         self.__template_path = settings.pop('template_path', '')
         self.__template_suffix = settings.pop('template_suffix', '.mako')
 
+        self.__default_page_size = settings.pop('default_page_size', 0)
         self.__permits = settings.pop('permits', {})
 
         # setup generic view options
@@ -31,7 +32,17 @@ class orb_view_config(object):
 
         new_settings.setdefault('custom_predicates', [])
         predicates = new_settings['custom_predicates']
-        predicates.append(self.lookup_records)
+
+        def lookup_records(custom_settings):
+            def call(context, request):
+                return self.lookup_records(context, request, custom_settings)
+            return call
+
+        custom_settings = {
+            'default_page_size': new_settings.pop('default_page_size', self.__default_page_size)
+        }
+
+        predicates.append(lookup_records(custom_settings))
         if 'permit' in new_settings:
             predicates.append(new_settings.pop('permit'))
 
@@ -45,15 +56,32 @@ class orb_view_config(object):
         return self.__model
 
     # predicates
-    def lookup_records(self, context, request):
+    def lookup_records(self, context, request, settings):
         model = self.model()
 
-        # get the record information
-        id = request.matchdict.get('id', request.params.get('id'))
-        if id is not None:
-            request.record = lambda: model(id)
-        else:
-            request.record = None
+        # record getter
+        params = collect_params(request)
+        params.setdefault('pageSize', settings['default_page_size'])
+        info = collect_query_info(model, params)
+        id = int(request.matchdict.get('id') or params.get('id') or 0)
+
+        # grab an individual record from the request
+        def get_record(model, id, info):
+            def getter():
+                record = model(id)
+                record.setLookupOptions(info['lookup'])
+                record.setDatabaseOptions(info['options'])
+                return record
+            return getter
+
+        # collect a record set based on the information from the request
+        def select_records(model, info):
+            def select():
+                return model.select(**info)
+            return select
+
+        request.record = get_record(model, id, info)
+        request.records = select_records(model, info)
 
         return True
 
