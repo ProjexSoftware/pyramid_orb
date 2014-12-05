@@ -76,7 +76,9 @@ class orb_view_config(object):
 
         # collect a record set based on the information from the request
         def select_records(model, info):
-            def select():
+            def select(**options):
+                info['lookup'].update(options)
+                info['options'].update(options)
                 return model.select(**info)
             return select
 
