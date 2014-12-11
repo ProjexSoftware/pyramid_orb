@@ -1,6 +1,6 @@
 import projex.text
 
-def add_routes(config, model, base=None):
+def add_routes(config, model, base=None, api=None):
     if base is None:
         base = projex.text.pluralize(projex.text.underscore(model.schema().name()))
 
@@ -20,3 +20,9 @@ def add_routes(config, model, base=None):
     config.add_route('%s.rest.update' % base, '%s/{id:\d+}.json' % base, request_method='PUT')
     config.add_route('%s.rest.delete' % base, '%s/{id:\d+}.json' % base, request_method='DELETE')
 
+    # create additional methods
+    api = api or {}
+    for method, request_method in api.items():
+        config.add_route('{0}.api.{1}'.format(base, method),
+                         '{0}/api/{1}'.format(base, method),
+                         request_method=request_method)

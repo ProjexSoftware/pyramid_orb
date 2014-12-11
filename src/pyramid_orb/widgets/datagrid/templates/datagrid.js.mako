@@ -6,28 +6,28 @@
             phone : 480
         };
 
-        var otable = $('#${grid.id()}').DataTable({
+        var otable = $('#${widget.id()}').DataTable({
             "autoWidth" : true,
             "preDrawCallback" : function() {
                 // Initialize the responsive datatables helper once.
-                if (!helper) { helper = new ResponsiveDatatablesHelper($('#${grid.id()}'), breakpointDefinition); }
+                if (!helper) { helper = new ResponsiveDatatablesHelper($('#${widget.id()}'), breakpointDefinition); }
             },
             "rowCallback" : function(nRow) { helper.createExpandIcon(nRow); },
             "drawCallback" : function(oSettings) { helper.respond(); },
             "ajax": function (data, callback, settings) {
                 $.ajax({
-                    url: "${grid.datasource()}",
+                    url: "${widget.datasource()}",
                     success: function (data, status, xhr) {
                         callback({data: data});
                     }
                 });
             },
             "columns": [
-            % for column in grid.columns():
+            % for column in widget.columns():
                 {"data": "${column.fieldName()}"},
             % endfor
             ],
-            ${grid.javascriptOptions()|n}
+            ${config|n}
         });
 
         // Apply the filter

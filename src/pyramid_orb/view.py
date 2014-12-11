@@ -140,6 +140,13 @@ class orb_view_config(object):
 
         return self(**settings)
 
+    def method(self, method_name, **settings):
+        settings.setdefault('route_name', '{0}.api.{1}'.format(self.__route_base, method_name))
+        settings.setdefault('renderer', 'orb_json')
+        settings.setdefault('request_method', 'GET')
+
+        return self(**settings)
+
     def select(self, **settings):
         settings.setdefault('route_name', self.__route_base + '.rest.select')
         settings.setdefault('renderer', 'orb_json')
