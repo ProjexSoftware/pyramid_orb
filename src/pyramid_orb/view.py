@@ -79,7 +79,8 @@ class orb_view_config(object):
             def select(**options):
                 info['lookup'].update(options)
                 info['options'].update(options)
-                return model.select(**info)
+                method = getattr(model, info.get('method', 'select'), model.select)
+                return method(**info)
             return select
 
         request.record = get_record(model, id, info)

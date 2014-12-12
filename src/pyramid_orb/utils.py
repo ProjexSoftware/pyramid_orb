@@ -43,7 +43,7 @@ def collect_query_info(model, request):
     }
 
     # generate a simple query object
-    q_build = {col: params[col] for col in params if model.schema().column(col)}
+    q_build = {col: params.pop(col) for col in params if model.schema().column(col)}
     if q_build:
         for k, v in q_build.items():
             try:
@@ -57,4 +57,6 @@ def collect_query_info(model, request):
     lookup = orb.LookupOptions(**options)
 
     # returns the lookup, database options, search terms and original options
-    return {'lookup': lookup, 'options': db_options, 'terms': terms}
+    output = {'lookup': lookup, 'options': db_options, 'terms': terms}
+    output.update(params)
+    return output
