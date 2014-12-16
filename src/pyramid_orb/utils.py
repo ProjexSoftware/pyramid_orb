@@ -43,9 +43,10 @@ def collect_query_info(model, request):
     }
 
     # generate a simple query object
-    q_build = {col: params.pop(col) for col in params if model.schema().column(col)}
+    q_build = {col: params[col] for col in params if model.schema().column(col)}
     if q_build:
         for k, v in q_build.items():
+            params.pop(k)
             try:
                 q_build[k] = eval(v)
             except StandardError:
