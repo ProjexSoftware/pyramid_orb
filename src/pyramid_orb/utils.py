@@ -15,7 +15,7 @@ def collect_params(request):
     except KeyError:
         pass
 
-    return params
+    return {k.rstrip('[]'): v for k, v in params.items()}
 
 def collect_query_info(model, request):
     """
