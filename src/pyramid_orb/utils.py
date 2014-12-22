@@ -38,7 +38,7 @@ def collect_query_info(model, request):
         'page': int(params.pop('page', -1)),
         'pageSize': int(params.pop('pageSize', 0)),
         'expand': params.pop('expand').split(',') if 'expand' in params else None,
-        'order': [k.split(':') for k in params.pop('order').split(',')] if 'order' in params else None,
+        'order': params.pop('order') or None,
         'locale': params.pop('locale', orb.system.locale())
     }
 
