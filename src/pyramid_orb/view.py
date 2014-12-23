@@ -121,45 +121,51 @@ class orb_view_config(object):
 
     # REST routes
     def delete(self, **settings):
-        settings.setdefault('route_name', self.__route_base + '.rest.delete')
-        settings.setdefault('renderer', 'orb_json')
+        settings.setdefault('route_name', 'api.{0}.delete'.format(self.__route_base))
+        settings.setdefault('renderer', 'json2')
+        settings.setdefault('request_method', 'DELETE')
+
+        return self(**settings)
+
+    def delete_many(self, **settings):
+        settings.setdefault('route_name', 'api.{0}.delete_many'.format(self.__route_base))
+        settings.setdefault('renderer', 'json2')
         settings.setdefault('request_method', 'DELETE')
 
         return self(**settings)
 
     def insert(self, **settings):
-        settings.setdefault('route_name', self.__route_base + '.rest.insert')
-        settings.setdefault('renderer', 'orb_json')
+        settings.setdefault('route_name', 'api.{0}.create'.format(self.__route_base))
+        settings.setdefault('renderer', 'json2')
         settings.setdefault('request_method', 'POST')
 
         return self(**settings)
 
     def get(self, **settings):
-        settings.setdefault('route_name', self.__route_base + '.rest.get')
-        settings.setdefault('renderer', 'orb_json')
-        settings.setdefault('request_method', 'GET')
-
-        return self(**settings)
-
-    def method(self, method_name, **settings):
-        settings.setdefault('route_name', '{0}.api.{1}'.format(self.__route_base, method_name))
-        settings.setdefault('renderer', 'orb_json')
+        settings.setdefault('route_name', 'api.{0}.get'.format(self.__route_base))
+        settings.setdefault('renderer', 'json2')
         settings.setdefault('request_method', 'GET')
 
         return self(**settings)
 
     def select(self, **settings):
-        settings.setdefault('route_name', self.__route_base + '.rest.select')
-        settings.setdefault('renderer', 'orb_json')
+        settings.setdefault('route_name', 'api.{0}'.format(self.__route_base))
+        settings.setdefault('renderer', 'json2')
         settings.setdefault('request_method', 'GET')
 
         return self(**settings)
 
     def update(self, **settings):
-        settings.setdefault('route_name', self.__route_base + '.rest.update')
-        settings.setdefault('renderer', 'orb_json')
+        settings.setdefault('route_name', 'api.{0}.update'.format(self.__route_base))
+        settings.setdefault('renderer', 'json2')
         settings.setdefault('request_method', 'PUT')
 
         return self(**settings)
 
+    def update_many(self, **settings):
+        settings.setdefault('route_name', 'api.{0}.update_many'.format(self.__route_base))
+        settings.setdefault('renderer', 'json2')
+        settings.setdefault('request_method', 'PUT')
+
+        return self(**settings)
 

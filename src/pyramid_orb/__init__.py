@@ -28,4 +28,4 @@ __version_info__ = (__major__, __minor__, __revision__)
 __version__ = '%s.%s' % (__major__, __minor__)
 
 def includeme(config):
-    config.add_renderer('orb_json', factory='pyramid_orb.renderer.orb_json_renderer_factory')
+    config.add_renderer('json2', factory='pyramid_orb.renderer.json2_renderer_factory')
