@@ -1,5 +1,13 @@
+import ast
 import orb
+
 from orb import Query as Q
+
+def safe_eval(value):
+    try:
+        return ast.literal_eval(value)
+    except ValueError:
+        return value
 
 def collect_params(request):
     if type(request) == dict:
@@ -15,7 +23,7 @@ def collect_params(request):
     except KeyError:
         pass
 
-    return {k.rstrip('[]'): v for k, v in params.items()}
+    return {k.rstrip('[]'): safe_eval(v) for k, v in params.items()}
 
 def collect_query_info(model, request):
     """
@@ -45,13 +53,6 @@ def collect_query_info(model, request):
     # generate a simple query object
     q_build = {col: params[col] for col in params if model.schema().column(col)}
     if q_build:
-        for k, v in q_build.items():
-            params.pop(k)
-            try:
-                q_build[k] = eval(v)
-            except StandardError:
-                pass
-
         options['where'] = Q.build(q_build)
 
     db_options = orb.DatabaseOptions(**options)
