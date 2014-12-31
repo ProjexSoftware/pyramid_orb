@@ -1,3 +1,4 @@
+import projex.rest
 import projex.text
 
 from orb import Query as Q
@@ -11,7 +12,7 @@ rest = lazy_import('pyramid_orb.rest')
 
 class Collection(RestService):
     """ A REST service for collections of data, in this case an ORB model. """
-    def __init__(self, request, model, parent=None, name=None):
+    def __init__(self, request, model, parent=None, name=None, method=None):
         if name is None:
             model_name = projex.text.underscore(model.schema().name())
             name = projex.text.pluralize(model_name)
@@ -19,6 +20,7 @@ class Collection(RestService):
         super(Collection, self).__init__(request, parent, name=name)
 
         self.model = model
+        self.method = method
 
     def __getitem__(self, key):
         # look for a record
@@ -32,7 +34,7 @@ class Collection(RestService):
             else:
                 # use a classmethod
                 if getattr(method, '__self__', None) == self.model:
-                    return None
+                    return RecordSetCollection(self.request, self.model, method, parent=self, name=method.__name__)
                 else:
                     raise KeyError(key)
         else:
@@ -48,30 +50,38 @@ class Collection(RestService):
         info = collect_query_info(self.model, self.request)
         return self.model.select(**info)
 
-    def help_data(self):
-        out = super(Collection, self).help_data()
-
-        # collect child services
-        record_services = {column.name(): {}
-                           for column in self.model.schema().columns() if column.isReference()}
-        record_services.update({pipe.name(): {':id': {}}
-                                for pipe in self.model.schema().pipes()})
-        record_services.update({lookup.reversedName(): {':id': {}}
-                                for lookup in self.model.schema().reverseLookups()})
-
-        out[self.__name__][':id'] = record_services
-        out[self.__name__].update({key: {} for key, value in vars(self.model).items()
-                    if getattr(value, '__self__', None) == self.model})
-
-        return out
-
     def post(self):
-        params = collect_params(self.request)
-        record = self.model()
-        record.update(**params)
-        record.commit()
-        return record
+        values = collect_params(self.request)
+        return self.model.createRecord(**values)
 
+class RecordSetCollection(RestService):
+    def __init__(self, request, model, method, parent=None, name=None):
+        super(RecordSetCollection, self).__init__(request=request, parent=parent, name=name)
+
+        self.model = model
+        self.method = method
+
+    def __getitem__(self, key):
+        # look for a record
+        try:
+            id = int(key)
+        except ValueError:
+            raise KeyError(key)
+        else:
+            record = self.method(where=Q(self.model) == id).first()
+            if not record:
+                raise errors.RecordNotFound(self.model, id)
+
+            info = collect_query_info(self.model, self.request)
+
+            record.setLookupOptions(info['lookup'])
+            record.setDatabaseOptions(info['options'])
+
+            return rest.Resource(self.request, record, self)
+
+    def get(self):
+        info = collect_query_info(self.model, self.request)
+        return self.method(**info)
 
 class PipeCollection(RestService):
     def __init__(self, request, record, pipe, parent=None):
@@ -107,6 +117,10 @@ class PipeCollection(RestService):
         model = self.pipe.targetReferenceModel()
         return self.pipe(**collect_query_info(model, self.request))
 
+    def put(self):
+        params = collect_params(self.request)
+        return self.pipe().update(**params)
+
     def post(self):
         params = collect_params(self.request)
         return self.pipe().createRecord(**params)
@@ -135,3 +149,11 @@ class ReverseLookupCollection(RestService):
     def get(self):
         info = collect_query_info(self.method.tableFor(self.record), self.request)
         return self.method(**info)
+
+    def put(self):
+        params = collect_params(self.request)
+        return self.method().update(**params)
+
+    def post(self):
+        params = collect_params(self.request)
+        return self.method().createRecord(**params)

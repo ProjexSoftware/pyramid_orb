@@ -16,9 +16,6 @@ class Service(dict):
         service.__parent__ = self
         self[service.__name__] = service
 
-    def help_data(self):
-        return {self.__name__: {}}
-
     def remove(self, service):
         """
         Removes the given service from the list of sub-services available.
@@ -80,9 +77,10 @@ class RestService(Service):
         """
         try:
             method = getattr(self, self.request.method.lower())
-            return method()
         except AttributeError:
             raise HTTPBadRequest()
+        else:
+            return method()
 
 class ModuleService(Service):
     def __init__(self, request, module, parent=None, name=None):

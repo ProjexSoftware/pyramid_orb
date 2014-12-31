@@ -93,21 +93,14 @@ class ApiFactory(dict):
         # look for a request to the root of the API, this will generate the
         # help information for the system
         if not request.traversed:
-            services = {}
-            for k, v in sorted(request.api_service.items()):
-                services.update(v.help_data())
-            return services
+            return {}
 
         # otherwise, process the request context
         else:
             permission = re.sub('\.\d+\.', 'id', '.'.join(request.traversed) + '.' + request.method.lower())
             if not self.testPermits(request, permission):
                 raise HTTPUnauthorized()
-
-            try:
-                return request.context.process()
-            except AttributeError:
-                raise HTTPBadRequest()
+            return request.context.process()
 
     def serve(self, config, path, route_name=None):
         """

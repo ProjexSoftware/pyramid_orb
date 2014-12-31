@@ -6,7 +6,7 @@ from orb import Query as Q
 def safe_eval(value):
     try:
         return ast.literal_eval(value)
-    except ValueError:
+    except StandardError:
         return value
 
 def collect_params(request):
@@ -23,7 +23,13 @@ def collect_params(request):
     except KeyError:
         pass
 
-    return {k.rstrip('[]'): safe_eval(v) for k, v in params.items()}
+    def extract(k, v):
+        if k.endswith('[]'):
+            return [safe_eval(v) for v in request.params.getall(k)]
+        else:
+            return safe_eval(v)
+
+    return {k.rstrip('[]'): extract(k, v) for k, v in params.items()}
 
 def collect_query_info(model, request):
     """
