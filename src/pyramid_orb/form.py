@@ -166,7 +166,6 @@ class OrbForm(object):
 
         if not force:
             if self.method() and self.method() != self._request.method:
-                log.error('Invalid form submission, mismatched methods.')
                 return False
 
         if values is None:
