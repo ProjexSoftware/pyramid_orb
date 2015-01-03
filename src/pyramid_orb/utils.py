@@ -3,11 +3,20 @@ import orb
 
 from orb import Query as Q
 
+CONSTANT_EVALS = {
+    'true': True,
+    'false': False,
+    'null': None
+}
+
 def safe_eval(value):
     try:
-        return ast.literal_eval(value)
-    except StandardError:
-        return value
+        return CONSTANT_EVALS[value]
+    except KeyError:
+        try:
+            return ast.literal_eval(value)
+        except StandardError:
+            return value
 
 def collect_params(request):
     if type(request) == dict:
