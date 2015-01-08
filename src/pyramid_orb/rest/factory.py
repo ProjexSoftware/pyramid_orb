@@ -27,7 +27,7 @@ class ApiFactory(dict):
         """
 
         # expose an ORB table dynamically as a service
-        if orb.Table.typecheck(service):
+        if orb.Table.typecheck(service) or orb.View.typecheck(service):
             if not name:
                 name = projex.text.underscore(service.schema().name())
                 name = projex.text.pluralize(name)

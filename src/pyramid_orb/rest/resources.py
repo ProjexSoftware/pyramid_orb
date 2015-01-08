@@ -1,7 +1,7 @@
+import orb
 
 from pyramid_orb.utils import collect_params
 from projex.lazymodule import lazy_import
-from pyramid_orb.utils import collect_query_info
 
 from .service import RestService
 
@@ -10,7 +10,8 @@ rest = lazy_import('pyramid_orb.rest')
 class Resource(RestService):
     """ Represents an individual database record """
     def __init__(self, request, record, parent=None):
-        super(Resource, self).__init__(request, parent, name=str(record.id()))
+        id = record.id() if (orb.Table.recordcheck(record) or orb.View.recordcheck(record)) else record.get('id', 'None')
+        super(Resource, self).__init__(request, parent, name=str(id))
 
         self.record = record
 
@@ -22,9 +23,11 @@ class Resource(RestService):
         else:
             # load a pipe resource
             if type(method.__func__).__name__ == 'Pipe':
-                return rest.PipeCollection(self.request, self.record, method, self)
+                return rest.PipeRecordSetCollection(self.request, method(), self, name=key)
             elif type(method.__func__).__name__ == 'reverselookupmethod':
-                return rest.ReverseLookupCollection(self.request, self.record, method, self)
+                return rest.RecordSetCollection(self.request, method(), self, name=key)
+            elif getattr(method.__func__, '__lookup__', None):
+                return rest.RecordSetCollection(self.request, method(), self, name=key)
             else:
                 column = self.record.schema().column(key)
                 if column and column.isReference():
@@ -33,18 +36,21 @@ class Resource(RestService):
         raise KeyError(key)
 
     def get(self):
+        self.record.updateOptions(**collect_params(self.request))
         return self.record
 
     def patch(self):
-        params = collect_params(self.request)
-        self.record.update(**params)
-        self.record.commit()
+        with orb.Transaction():
+            params = collect_params(self.request)
+            self.record.update(**params)
+            self.record.commit()
         return self.record
 
     def put(self):
         params = collect_params(self.request)
-        self.record.update(**params)
-        self.record.commit()
+        with orb.Transaction():
+            self.record.update(**params)
+            self.record.commit()
         return self.record
 
     def delete(self):
@@ -53,27 +59,31 @@ class Resource(RestService):
 
 class PipedResource(RestService):
     """ Represents an individual database record """
-    def __init__(self, request, pipe, record, parent=None):
+    def __init__(self, request, recordset, record, parent=None):
         super(PipedResource, self).__init__(request, parent, name=str(record.id()))
 
-        self.pipe = pipe
+        self.recordset = recordset
         self.record = record
 
     def get(self):
+        self.record.updateOptions(**collect_params(self.request))
         return self.record
 
     def patch(self):
         params = collect_params(self.request)
-        self.record.update(**params)
-        self.record.commit()
+        with orb.Transaction():
+            self.record.update(**params)
+            self.record.commit()
         return self.record
 
     def put(self):
         params = collect_params(self.request)
-        self.record.update(**params)
-        self.record.commit()
+        with orb.Transaction():
+            self.record.update(**params)
+            self.record.commit()
         return self.record
 
     def delete(self):
-        self.pipe().removeRecord(self.record)
+        with orb.Transaction():
+            self.recordset.removeRecord(self.record)
         return {}

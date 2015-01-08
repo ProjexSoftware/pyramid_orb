@@ -1,3 +1,4 @@
+import orb
 import projex.rest
 import projex.text
 
@@ -28,22 +29,21 @@ class Collection(RestService):
             id = int(key)
         except ValueError:
             try:
-                method = getattr(self.model, key, None)
+                method = getattr(self.model, key)
             except AttributeError:
-                raise KeyError(key)
+                view = self.model.schema().view(key)
+                if not view:
+                    raise KeyError(key)
+                else:
+                    return Collection(self.request, view, parent=self, name=key)
             else:
                 # use a classmethod
-                if getattr(method, '__self__', None) == self.model:
-                    return RecordSetCollection(self.request, self.model, method, parent=self, name=method.__name__)
+                if getattr(method, '__lookup__', False):
+                    return RecordSetCollection(self.request, method(), parent=self, name=method.__name__)
                 else:
                     raise KeyError(key)
         else:
-            info = collect_query_info(self.model, self.request)
-
             record = self.model(id)
-            record.setLookupOptions(info['lookup'])
-            record.setDatabaseOptions(info['options'])
-
             return rest.Resource(self.request, record, self)
 
     def get(self):
@@ -51,109 +51,88 @@ class Collection(RestService):
         return self.model.select(**info)
 
     def post(self):
-        values = collect_params(self.request)
-        return self.model.createRecord(**values)
+        with orb.Transaction():
+            values = collect_params(self.request)
+            return self.model.createRecord(**values)
 
 class RecordSetCollection(RestService):
-    def __init__(self, request, model, method, parent=None, name=None):
+    def __init__(self, request, recordset, parent=None, name=None):
         super(RecordSetCollection, self).__init__(request=request, parent=parent, name=name)
 
-        self.model = model
-        self.method = method
+        self.recordset = recordset
 
     def __getitem__(self, key):
         # look for a record
         try:
             id = int(key)
         except ValueError:
-            raise KeyError(key)
+            viewset = self.recordset.view(key)
+            if viewset is not None:
+                return rest.RecordSetCollection(self.request, viewset, parent=self, name=key)
+            else:
+                raise KeyError(key)
         else:
-            record = self.method(where=Q(self.model) == id).first()
+            model = self.recordset.table()
+            record = self.recordset.refine(where=Q(model) == id).first()
             if not record:
-                raise errors.RecordNotFound(self.model, id)
-
-            info = collect_query_info(self.model, self.request)
-
-            record.setLookupOptions(info['lookup'])
-            record.setDatabaseOptions(info['options'])
-
+                raise errors.RecordNotFound(model, id)
             return rest.Resource(self.request, record, self)
 
     def get(self):
-        info = collect_query_info(self.model, self.request)
-        return self.method(**info)
+        info = collect_query_info(self.recordset.table(), self.request)
+        return self.recordset.refine(**info)
 
-class PipeCollection(RestService):
-    def __init__(self, request, record, pipe, parent=None):
-        super(PipeCollection, self).__init__(request, parent, name=pipe.__name__)
+    def put(self):
+        with orb.Transaction():
+            params = collect_params(self.request)
+            return self.recordset.update(**params)
 
-        self.pipe = pipe
-        self.record = record
+    def post(self):
+        with orb.Transaction():
+            params = collect_params(self.request)
+            return self.recordset.createRecord(**params)
+
+class PipeRecordSetCollection(RestService):
+    def __init__(self, request, recordset, parent=None, name=None):
+        super(PipeRecordSetCollection, self).__init__(request, parent, name=name)
+
+        self.recordset = recordset
 
     def __getitem__(self, key):
-        model = self.pipe.targetReferenceModel()
+        model = self.recordset.table()
         # look for a record
         try:
             id = int(key)
         except ValueError:
-            raise KeyError(key)
+            viewset = self.recordset.view(key)
+            if viewset is not None:
+                return RecordSetCollection(self.request, viewset, parent=None, name=key)
+            else:
+                raise KeyError(key)
         else:
-            record = self.pipe(where=Q(model) == id).first()
+            record = self.recordset.refine(where=Q(model) == id).first()
             if not record:
                 try:
-                    record = self.pipe()[id]
+                    record = self.recordset.recordAt(id)
                 except IndexError:
                     raise errors.RecordNotFound(model, id)
 
-            info = collect_query_info(model, self.request)
-            record.setLookupOptions(info['lookup'])
-            record.setDatabaseOptions(info['options'])
-
-            if not record:
-                raise errors.RecordNotFound(model, key)
-            return rest.PipedResource(self.request, self.pipe, record, self)
-
-    def get(self):
-        model = self.pipe.targetReferenceModel()
-        return self.pipe(**collect_query_info(model, self.request))
-
-    def put(self):
-        params = collect_params(self.request)
-        return self.pipe().update(**params)
-
-    def post(self):
-        params = collect_params(self.request)
-        return self.pipe().createRecord(**params)
-
-class ReverseLookupCollection(RestService):
-    def __init__(self, request, record, method, parent=None):
-        super(ReverseLookupCollection, self).__init__(request, parent, name=method.__name__)
-
-        self.record = record
-        self.method = method
-
-    def __getitem__(self, key):
-        model = self.method.tableFor(self.record)
-
-        # look for a record
-        try:
-            record = self.method(where=Q(model) == int(key)).first()
-        except ValueError:
-            raise KeyError(key)
-        else:
             if not record:
                 raise errors.RecordNotFound(model, key)
 
-            return rest.Resource(self.request, record, self)
+            return rest.PipedResource(self.request, self.recordset, record, self)
 
     def get(self):
-        info = collect_query_info(self.method.tableFor(self.record), self.request)
-        return self.method(**info)
+        model = self.recordset.table()
+        return self.recordset.refine(**collect_query_info(model, self.request))
 
     def put(self):
-        params = collect_params(self.request)
-        return self.method().update(**params)
+        with orb.Transaction():
+            params = collect_params(self.request)
+            return self.recordset.update(**params)
 
     def post(self):
-        params = collect_params(self.request)
-        return self.method().createRecord(**params)
+        with orb.Transaction():
+            params = collect_params(self.request)
+            return self.recordset.createRecord(**params)
+
