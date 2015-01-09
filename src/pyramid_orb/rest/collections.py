@@ -28,9 +28,11 @@ class Collection(RestService):
         try:
             id = int(key)
         except ValueError:
-            try:
-                method = getattr(self.model, key)
-            except AttributeError:
+            method = getattr(self.model, key, None) or \
+                     getattr(self.model, projex.text.underscore(key), None) or \
+                     getattr(self.model, projex.text.camelHump(key), None)
+
+            if method is None:
                 view = self.model.schema().view(key)
                 if not view:
                     raise KeyError(key)

@@ -1,4 +1,5 @@
 import orb
+import projex.text
 
 from pyramid_orb.utils import collect_params
 from projex.lazymodule import lazy_import
@@ -16,9 +17,12 @@ class Resource(RestService):
         self.record = record
 
     def __getitem__(self, key):
-        try:
-            method = getattr(self.record, key)
-        except AttributeError:
+
+        method = getattr(self.record, key, None ) or \
+                 getattr(self.record, projex.text.underscore(key), None) or \
+                 getattr(self.record, projex.text.camelHump(key), None)
+
+        if not method:
             raise KeyError(key)
         else:
             # load a pipe resource
