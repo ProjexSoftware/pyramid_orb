@@ -1,7 +1,7 @@
 import orb
 import projex.text
 
-from pyramid_orb.utils import collect_params
+from pyramid_orb.utils import collect_params, collect_query_info
 from projex.lazymodule import lazy_import
 
 from .service import RestService
@@ -40,7 +40,7 @@ class Resource(RestService):
         raise KeyError(key)
 
     def get(self):
-        self.record.updateOptions(**collect_params(self.request))
+        self.record.updateOptions(**collect_query_info(type(self.record), self.request))
         return self.record
 
     def patch(self):
@@ -70,7 +70,7 @@ class PipedResource(RestService):
         self.record = record
 
     def get(self):
-        self.record.updateOptions(**collect_params(self.request))
+        self.record.updateOptions(**collect_query_info(type(self.record), self.request))
         return self.record
 
     def patch(self):
