@@ -113,11 +113,6 @@ class PipeRecordSetCollection(RestService):
                 raise KeyError(key)
         else:
             record = self.recordset.refine(where=Q(model) == id).first()
-            if not record:
-                try:
-                    record = self.recordset.recordAt(id)
-                except IndexError:
-                    raise errors.RecordNotFound(model, id)
 
             if not record:
                 raise errors.RecordNotFound(model, key)
