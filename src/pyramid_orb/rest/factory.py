@@ -38,7 +38,7 @@ class ApiFactory(dict):
         # expose a module dynamically as a service
         elif inspect.ismodule(service):
             if not name:
-                name = service.__name__
+                name = service.__name__.split('.')[-1]
 
             self._modules[name] = service
 
@@ -97,8 +97,7 @@ class ApiFactory(dict):
 
         # otherwise, process the request context
         else:
-            permission = re.sub('\.\d+\.', 'id', '.'.join(request.traversed) + '.' + request.method.lower())
-            if not self.testPermits(request, permission):
+            if not self.testPermits(request, request.context.permit()):
                 raise HTTPUnauthorized()
             return request.context.process()
 
@@ -106,7 +105,7 @@ class ApiFactory(dict):
         """
         Serves this API from the inputed root path
         """
-        route_name = route_name or path.replace('/', '.')
+        route_name = route_name or path.replace('/', '.').strip('.')
         path = path.strip('/') + '/*traverse'
 
         # configure the route and the path
@@ -124,3 +123,4 @@ class ApiFactory(dict):
         if self._authenticator:
             return self._authenticator(request, permission)
         return True
+

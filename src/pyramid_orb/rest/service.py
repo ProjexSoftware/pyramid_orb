@@ -1,4 +1,5 @@
 import orb
+import re
 
 from pyramid.httpexceptions import HTTPBadRequest
 
@@ -34,6 +35,9 @@ class Service(dict):
 
     def process(self, request):
         raise NotImplementedError
+
+    def permit(self):
+        return re.sub('\.\d+\.', 'id', self.request.method.lower() + '.' + '.'.join(self.request.traversed))
 
 
 class RestService(Service):
@@ -99,17 +103,114 @@ class RestService(Service):
 
             return output
 
+
+class RestCallable(object):
+    def __init__(self, name, callable, method='GET', permit=None):
+        self.__name__ = name
+        self.__callable__ = callable
+        self.__method__ = method
+        self.__permit__ = permit
+
+    def __call__(self, request):
+        if self.__method__ == request.method:
+            return self.__callable__(request)
+        else:
+            raise StandardError('Invalid request.')
+
+    def get(self, **options):
+        def setup(callable):
+            name = options.pop('name', self.__name__)
+            permit = options.pop('permission', '__DEFAULT__')
+            return RestCallable(name, callable, 'GET', permit)
+        return setup
+
+    def post(self, **options):
+        def setup(callable):
+            name = options.pop('name', self.__name__)
+            permit = options.pop('permission', '__DEFAULT__')
+            return RestCallable(name, callable, 'POST', permit)
+        return setup
+
+    def delete(self, **options):
+        def setup(callable):
+            name = options.pop('name', self.__name__)
+            permit = options.pop('permission', '__DEFAULT__')
+            return RestCallable(name, callable, 'DELETE', permit)
+        return setup
+
+    def put(self, **options):
+        def setup(callable):
+            name = options.pop('name', self.__name__)
+            permit = options.pop('permission', '__DEFAULT__')
+            return RestCallable(name, callable, 'PUT', permit)
+        return setup
+
+    def patch(self, **options):
+        def setup(callable):
+            name = options.pop('name', self.__name__)
+            permit = options.pop('permission', '__DEFAULT__')
+            return RestCallable(name, callable, 'PATCH', permit)
+        return setup
+
+
 class ModuleService(Service):
     def __init__(self, request, module, parent=None, name=None):
-        super(ModuleService, self).__init__(request, name or module.__name__, parent)
+        super(ModuleService, self).__init__(request, name or module.__name__.split('.')[-1], parent)
 
         self.module = module
+        self.callables = {}
+        for callable in vars(module).values():
+            if isinstance(callable, RestCallable):
+                self.callables.setdefault(callable.__name__, {})
+                self.callables[callable.__name__][callable.__method__] = callable
+
+    def __getitem__(self, key):
+        if key in self.callables:
+            return self
+        else:
+            raise KeyError(key)
 
     def process(self):
-        print self.request.path
+        name = self.request.path.strip('/').split('/')[-1]
+        try:
+            callable = self.callables[name][self.request.method]
+        except KeyError:
+            raise HTTPBadRequest()
+        else:
+            return callable(self.request)
+
+    def permit(self):
+        name = self.request.path.strip('/').split('/')[-1]
+        try:
+            callable = self.callables[name][self.request.method]
+        except KeyError:
+            return None
+        else:
+            default = super(ModuleService, self).permit()
+            return callable.__permit__ if callable.__permit__ != '__DEFAULT__' else default
 
 class ClassService(Service):
     def __init__(self, request, cls, parent=None, name=None):
         super(ClassService, self).__init__(request, name or cls.__name__, parent)
 
         self.instance = cls(request)
+        self.callables = {}
+        for callable in vars(self.instance).values():
+            if isinstance(callable, RestCallable):
+                self.callables.setdefault(callable.__name__, {})
+                self.callables[callable.__name__][callable.__method__] = callable
+
+    def __getitem__(self, key):
+        if key in self.callables:
+            return self
+        else:
+            raise KeyError(key)
+
+    def process(self):
+        name = self.request.path.split('/')[-1]
+        try:
+            callable = self.callables[name][self.request.method]
+        except KeyError:
+            raise HTTPBadRequest()
+        else:
+            return callable()

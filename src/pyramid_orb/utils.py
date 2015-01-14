@@ -1,22 +1,7 @@
-import ast
 import orb
 
 from orb import Query as Q
-
-CONSTANT_EVALS = {
-    'true': True,
-    'false': False,
-    'null': None
-}
-
-def safe_eval(value):
-    try:
-        return CONSTANT_EVALS[value]
-    except KeyError:
-        try:
-            return ast.literal_eval(value)
-        except StandardError:
-            return value
+from projex.text import safe_eval
 
 def collect_params(request):
     if type(request) == dict:
