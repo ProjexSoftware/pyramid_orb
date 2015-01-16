@@ -35,8 +35,12 @@ class OrbForm(object):
         if not values:
             values = self.submittedValues()
 
-        self.record().update(**values)
-        return self.record().commit()
+        if not self.record().isRecord():
+            self._record = self._record.createRecord(**values)
+        else:
+            self._record.update(**values)
+
+        return True
 
     def checkbox(self, name, value="1", checked=False, label=None, id=None, **attrs):
         return tags.checkbox(name,
