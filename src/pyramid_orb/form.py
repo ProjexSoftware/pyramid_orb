@@ -39,6 +39,7 @@ class OrbForm(object):
             self._record = self._record.createRecord(**values)
         else:
             self._record.update(**values)
+            self._record.commit()
 
         return True
 
