@@ -28,25 +28,32 @@ class Collection(RestService):
         try:
             id = int(key)
         except ValueError:
-            method = getattr(self.model, key, None) or \
-                     getattr(self.model, projex.text.underscore(key), None) or \
-                     getattr(self.model, projex.text.camelHump(key), None)
+            id = key
 
-            if method is None:
-                view = self.model.schema().view(key)
-                if not view:
-                    raise KeyError(key)
-                else:
-                    return Collection(self.request, view, parent=self, name=key)
-            else:
-                # use a classmethod
-                if getattr(method, '__lookup__', False):
-                    return RecordSetCollection(self.request, method(), parent=self, name=method.__name__)
-                else:
-                    raise KeyError(key)
-        else:
+        try:
             record = self.model(id)
+        except errors.RecordNotFound:
+            if type(id) == int:
+                raise
+        else:
             return rest.Resource(self.request, record, self)
+
+        method = getattr(self.model, key, None) or \
+                 getattr(self.model, projex.text.underscore(key), None) or \
+                 getattr(self.model, projex.text.camelHump(key), None)
+
+        if method is None:
+            view = self.model.schema().view(key)
+            if not view:
+                raise KeyError(key)
+            else:
+                return Collection(self.request, view, parent=self, name=key)
+        else:
+            # use a classmethod
+            if getattr(method, '__lookup__', False):
+                return RecordSetCollection(self.request, method(), parent=self, name=method.__name__)
+            else:
+                raise KeyError(key)
 
     def get(self):
         info = collect_query_info(self.model, self.request)
@@ -68,17 +75,26 @@ class RecordSetCollection(RestService):
         try:
             id = int(key)
         except ValueError:
-            viewset = self.recordset.view(key)
-            if viewset is not None:
-                return rest.RecordSetCollection(self.request, viewset, parent=self, name=key)
-            else:
-                raise KeyError(key)
+            id = key
+
+        # lookup the table by the id
+        try:
+            record = self.recordset.table()(id)
+        except errors.RecordNotFound:
+            if type(id) == int:
+                raise
         else:
-            model = self.recordset.table()
-            record = self.recordset.refine(where=Q(model) == id).first()
-            if not record:
-                raise errors.RecordNotFound(model, id)
-            return rest.Resource(self.request, record, self)
+            if not self.recordset.hasRecord(record):
+                raise errors.RecordNotFound(self.recordset.table(), id)
+            else:
+                return rest.Resource(self.request, record, self)
+
+        # look for a view of this recordset instead
+        viewset = self.recordset.view(key)
+        if viewset is not None:
+            return rest.RecordSetCollection(self.request, viewset, parent=self, name=key)
+        else:
+            raise KeyError(key)
 
     def get(self):
         info = collect_query_info(self.recordset.table(), self.request)
@@ -106,18 +122,25 @@ class PipeRecordSetCollection(RestService):
         try:
             id = int(key)
         except ValueError:
-            viewset = self.recordset.view(key)
-            if viewset is not None:
-                return RecordSetCollection(self.request, viewset, parent=None, name=key)
-            else:
-                raise KeyError(key)
+            id = key
+
+        # lookup the table by the id
+        try:
+            record = self.recordset.table()(id)
+        except errors.RecordNotFound:
+            if type(id) == int:
+                raise
         else:
-            record = self.recordset.refine(where=Q(model) == id).first()
+            if not self.recordset.hasRecord(record):
+                raise errors.RecordNotFound(self.recordset.table(), id)
+            else:
+                return rest.PipedResource(self.request, self.recordset, record, self)
 
-            if not record:
-                raise errors.RecordNotFound(model, key)
-
-            return rest.PipedResource(self.request, self.recordset, record, self)
+        viewset = self.recordset.view(key)
+        if viewset is not None:
+            return RecordSetCollection(self.request, viewset, parent=None, name=key)
+        else:
+            raise KeyError(key)
 
     def get(self):
         model = self.recordset.table()
