@@ -6,15 +6,22 @@
             phone : 480
         };
 
-        var otable = $('#${widget.id()}').DataTable({
-            "autoWidth" : true,
-            "preDrawCallback" : function() {
+        // define the base options for the grid
+        var options = {
+            autoWidth: true,
+            preDrawCallback: function () {
                 // Initialize the responsive datatables helper once.
-                if (!helper) { helper = new ResponsiveDatatablesHelper($('#${widget.id()}'), breakpointDefinition); }
+                if (!helper) {
+                    helper = new ResponsiveDatatablesHelper($('#${widget.id()}'), breakpointDefinition);
+                }
             },
-            "rowCallback" : function(nRow) { helper.createExpandIcon(nRow); },
-            "drawCallback" : function(oSettings) { helper.respond(); },
-            "ajax": function (data, callback, settings) {
+            rowCallback: function (nRow) {
+                helper.createExpandIcon(nRow);
+            },
+            drawCallback: function (oSettings) {
+                helper.respond();
+            },
+            ajax: function (data, callback, settings) {
                 $.ajax({
                     url: "${widget.datasource()}",
                     success: function (data, status, xhr) {
@@ -22,13 +29,17 @@
                     }
                 });
             },
-            "columns": [
-            % for column in widget.columns():
-                {"data": "${column.fieldName()}"},
-            % endfor
-            ],
-            ${config|n}
-        });
+            columns: [
+                % for column in widget.columns():
+                    {data: "${column.fieldName()}"},
+                % endfor
+            ]
+        };
+
+        // include any override options
+        $.extend(options, ${config or '{}'|n});
+
+        var otable = $('#${widget.id()}').DataTable(options);
 
         // Apply the filter
         $("#datatable thead th input[type=text]").on('keyup change', function () {
