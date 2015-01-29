@@ -8,18 +8,27 @@ from .service import Service, ModuleService, ClassService
 from .collections import Collection
 
 class ApiFactory(dict):
-    def __init__(self, version='1.0.0', authenticator=None):
+    def __init__(self, version='1.0.0', authenticator=None, analytics=None):
         super(ApiFactory, self).__init__()
 
         # custom properties
         self._authenticator = authenticator
         self._version = version
+        self._analytics = analytics
 
         # services
         self._models = {}
         self._modules = {}
         self._classes = {}
         self._services = {}
+
+    def analytics(self):
+        """
+        Returns an implementation of analytics tracking.
+
+        :return     <pyramid_orb.analytics.Analytics> || None
+        """
+        return self._analytics
 
     def expose(self, service, name=''):
         """
@@ -97,6 +106,9 @@ class ApiFactory(dict):
 
         # otherwise, process the request context
         else:
+            if self.analytics():
+                self.analytics().report(request)
+
             if not self.testPermits(request, request.context.permit()):
                 raise HTTPUnauthorized()
             return request.context.process()
