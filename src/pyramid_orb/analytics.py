@@ -8,7 +8,7 @@ class Analytics(object):
 class GoogleAnalytics(Analytics):
     def __init__(self, token):
         self._token = token
-        self._host = 'https://www.google-analytics.com'
+        self._host = 'https://www.google-analytics.com/collect'
 
     def report(self, request):
         data = {
