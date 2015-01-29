@@ -14,13 +14,15 @@ class GoogleAnalytics(Analytics):
         data = {
             'v': 1,
             'tid': self._token,
-            'cid': request.client_ip,
+            'cid': request.client_addr,
             't': 'pageview',
             'dh': request.application_url,
             'dp': request.path,
-            'dt': request.title
+            'dt': 'api'
         }
 
         # submit this report to the analytics engine
-        requests.post(self._host, data=data)
-
+        try:
+            requests.post(self._host, data=data)
+        except StandardError:
+            pass
