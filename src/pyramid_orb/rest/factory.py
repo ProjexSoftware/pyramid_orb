@@ -1,9 +1,8 @@
 import inspect
 import orb
-import re
 import projex.text
 
-from pyramid.httpexceptions import HTTPBadRequest, HTTPUnauthorized
+from pyramid.httpexceptions import HTTPForbidden
 from .service import Service, ModuleService, ClassService
 from .collections import Collection
 
@@ -110,7 +109,8 @@ class ApiFactory(dict):
                 self.analytics().report(request)
 
             if not self.testPermits(request, request.context.permit()):
-                raise HTTPUnauthorized()
+                raise HTTPForbidden()
+
             return request.context.process()
 
     def serve(self, config, path, route_name=None):
