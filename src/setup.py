@@ -19,16 +19,16 @@ except AttributeError:
     REQUIREMENTS = []
 
 setup(
-    name = 'pyramid_orb',
+    name = 'pyramid-orb',
     version = VERSION,
-    author = 'Projex Software',
-    author_email = 'team@projexsoftware.com',
-    maintainer = 'Projex Software',
-    maintainer_email = 'team@projexsoftware.com',
+    author = 'Eric Hulser',
+    author_email = 'eric.hulser@gmail.com',
+    maintainer = 'Eric Hulser',
+    maintainer_email = 'eric.hulser@gmail.com',
     description = 'Bindings for the pyramid webframework and the ORB database ORM library.',
     license = 'LGPL',
     keywords = '',
-    url = 'http://www.projexsoftware.com',
+    url = 'https://github.com/ProjexSoftware/pyramid_orb',
     include_package_data=True,
     packages = find_packages(),
     install_requires = REQUIREMENTS,
