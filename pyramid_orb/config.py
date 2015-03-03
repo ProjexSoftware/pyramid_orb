@@ -1,5 +1,6 @@
 import projex.text
 
+
 def add_routes(config, model, base=None):
     if base is None:
         base = projex.text.pluralize(projex.text.underscore(model.schema().name()))

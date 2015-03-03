@@ -2,6 +2,7 @@ from ..base import Widget
 
 import projex.text
 
+
 class DataGrid(Widget):
     def __init__(self, request, table, **options):
         options.setdefault('id', '{0}_table'.format(projex.text.underscore(table.schema().name())))

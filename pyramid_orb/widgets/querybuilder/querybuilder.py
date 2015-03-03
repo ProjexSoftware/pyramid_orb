@@ -2,6 +2,7 @@ from ..base import Widget
 
 import projex.text
 
+
 class QueryBuilder(Widget):
     def __init__(self, request, table, **options):
         templates = options.get('templates', {})

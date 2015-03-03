@@ -3,9 +3,12 @@ import re
 
 from pyramid.httpexceptions import HTTPBadRequest
 
+
 class Service(dict):
     """ Base class for all REST services used within a Pyramid Traversal """
     def __init__(self, request=None, parent=None, name=None):
+        super(Service, self).__init__()
+
         self.request = request
         self.__name__ = name or type(self).__name__
         self.__parent__ = parent
@@ -33,13 +36,14 @@ class Service(dict):
         if service:
             service.__parent__ = None
 
-    def process(self, request):
+    def process(self):
         raise NotImplementedError
 
     def permit(self):
         return re.sub('\.\d+\.', 'id', self.request.method.lower() + '.' + '.'.join(self.request.traversed))
 
 
+# noinspection PyMethodOverriding
 class RestService(Service):
     def delete(self):
         """
@@ -88,7 +92,7 @@ class RestService(Service):
         else:
             output = method()
 
-            # store additional information in the respose header for record sets
+            # store additional information in the response header for record sets
             if isinstance(output, orb.RecordSet):
                 new_output = output.json()
 
@@ -153,6 +157,7 @@ class RestCallable(object):
         return setup
 
 
+# noinspection PyMethodOverriding
 class ModuleService(Service):
     def __init__(self, request, module, parent=None, name=None):
         super(ModuleService, self).__init__(request, name or module.__name__.split('.')[-1], parent)
@@ -189,6 +194,8 @@ class ModuleService(Service):
             default = super(ModuleService, self).permit()
             return callable.__permit__ if callable.__permit__ != '__DEFAULT__' else default
 
+
+# noinspection PyMethodOverriding
 class ClassService(Service):
     def __init__(self, request, cls, parent=None, name=None):
         super(ClassService, self).__init__(request, name or cls.__name__, parent)

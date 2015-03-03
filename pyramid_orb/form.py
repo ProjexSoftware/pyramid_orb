@@ -119,7 +119,7 @@ class OrbForm(object):
         else:
             params = self._request.params
 
-        # extract the values from the inputed string
+        # extract the values from the inputted string
         schema = self.record().schema()
         values = {}
         for k, v in params.items():

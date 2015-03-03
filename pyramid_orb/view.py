@@ -3,6 +3,7 @@ import projex.text
 from pyramid.view import view_config
 from .utils import collect_params, collect_query_info
 
+
 class orb_view_config(object):
     """
     Wrapper decorator to define meta information for a view class

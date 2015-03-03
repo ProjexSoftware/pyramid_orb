@@ -3,6 +3,7 @@ import orb
 from orb import Query as Q
 from projex.text import safe_eval
 
+
 def collect_params(request):
     if type(request) == dict:
         return request
@@ -25,13 +26,14 @@ def collect_params(request):
 
     return {k.rstrip('[]'): extract(k, v) for k, v in params.items()}
 
+
 def collect_query_info(model, request):
     """
-    Processes the inputed request object for search terms and parameters.
+    Processes the inputted request object for search terms and parameters.
 
     :param      request | <pyramid.request.Request>
 
-    :return     (<orb.LookupOptions>, <orb.DatabaseOptions>, <str> search terms, <dict> orignal options)
+    :return     (<orb.LookupOptions>, <orb.DatabaseOptions>, <str> search terms, <dict> original options)
     """
     params = collect_params(request)
 

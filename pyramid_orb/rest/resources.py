@@ -8,6 +8,7 @@ from .service import RestService
 
 rest = lazy_import('pyramid_orb.rest')
 
+
 class Resource(RestService):
     """ Represents an individual database record """
     def __init__(self, request, record, parent=None):

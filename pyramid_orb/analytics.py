@@ -8,6 +8,7 @@ class Analytics(object):
     def report(self, request):
         pass
 
+
 class GoogleAnalytics(Analytics):
     def __init__(self, id):
         self._id = id

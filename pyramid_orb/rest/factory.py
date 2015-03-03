@@ -6,6 +6,7 @@ from pyramid.httpexceptions import HTTPForbidden
 from .service import Service, ModuleService, ClassService
 from .collections import Collection
 
+
 class ApiFactory(dict):
     def __init__(self, version='1.0.0', authenticator=None, analytics=None):
         super(ApiFactory, self).__init__()
@@ -115,7 +116,7 @@ class ApiFactory(dict):
 
     def serve(self, config, path, route_name=None):
         """
-        Serves this API from the inputed root path
+        Serves this API from the inputted root path
         """
         route_name = route_name or path.replace('/', '.').strip('.')
         path = path.strip('/') + '/*traverse'

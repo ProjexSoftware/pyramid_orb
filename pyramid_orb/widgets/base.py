@@ -1,5 +1,6 @@
 from pyramid.renderers import render
 
+
 class Widget(object):
     def __init__(self, request, **options):
         self._request = request

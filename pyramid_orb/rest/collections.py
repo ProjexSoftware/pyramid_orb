@@ -2,7 +2,6 @@ import orb
 import projex.rest
 import projex.text
 
-from orb import Query as Q
 from orb import errors
 from projex.lazymodule import lazy_import
 from pyramid_orb.utils import collect_params, collect_query_info
@@ -10,6 +9,7 @@ from pyramid_orb.utils import collect_params, collect_query_info
 from .service import RestService
 
 rest = lazy_import('pyramid_orb.rest')
+
 
 class Collection(RestService):
     """ A REST service for collections of data, in this case an ORB model. """
@@ -64,6 +64,7 @@ class Collection(RestService):
             values = collect_params(self.request)
             return self.model.createRecord(**values)
 
+
 class RecordSetCollection(RestService):
     def __init__(self, request, recordset, parent=None, name=None):
         super(RecordSetCollection, self).__init__(request=request, parent=parent, name=name)
@@ -110,6 +111,7 @@ class RecordSetCollection(RestService):
             params = collect_params(self.request)
             return self.recordset.createRecord(**params)
 
+
 class PipeRecordSetCollection(RestService):
     def __init__(self, request, recordset, parent=None, name=None):
         super(PipeRecordSetCollection, self).__init__(request, parent, name=name)
@@ -117,7 +119,6 @@ class PipeRecordSetCollection(RestService):
         self.recordset = recordset
 
     def __getitem__(self, key):
-        model = self.recordset.table()
         # look for a record
         try:
             id = int(key)
