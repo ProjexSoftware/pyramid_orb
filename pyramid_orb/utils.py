@@ -27,40 +27,59 @@ def collect_params(request):
     return {k.rstrip('[]'): extract(k, v) for k, v in params.items()}
 
 
+def get_context(request, params=None):
+    if params is None:
+        params = collect_params(request)
+
+    context_options = {
+       'inflated': params.pop('inflated') == 'True' if 'inflated' in params else True,
+        'locale': params.pop('locale', None),
+        'timezone': params.pop('timezone', None),
+        'request': request
+    }
+
+    return orb.ContextOptions(**context_options)
+
+
+def get_lookup(request, model=None, params=None):
+    if params is None:
+        params = collect_params(request)
+
+    # generate a simple query object
+    if model:
+        q_build = {col: params.pop(col) for col in params.keys() if model.schema().column(col)}
+    else:
+        q_build = None
+
+    lookup_options = {
+        'columns': params.pop('columns').split(',') if 'columns' in params else None,
+        'where': Q.build(q_build) if q_build else None,
+        'order': params.pop('order', None) or None,
+        'expand': params.pop('expand').split(',') if 'expand' in params else None,
+        'start': int(params.pop('start')) if 'start' in params else None,
+        'limit': int(params.pop('limit')) if 'limit' in params else None,
+        'page': int(params.pop('page', -1)),
+        'pageSize': int(params.pop('pageSize', 0))
+    }
+
+    return orb.LookupOptions(**lookup_options)
+
+
 def collect_query_info(model, request):
     """
     Processes the inputted request object for search terms and parameters.
 
     :param      request | <pyramid.request.Request>
 
-    :return     (<orb.LookupOptions>, <orb.DatabaseOptions>, <str> search terms, <dict> original options)
+    :return     (<orb.LookupOptions>, <orb.ContextOptions>, <str> search terms, <dict> original options)
     """
     params = collect_params(request)
 
-    # create the lookup information
-    terms = params.pop('terms', '')
-
-    options = {
-        'columns': params.pop('columns').split(',') if 'columns' in params else None,
-        'limit': int(params.pop('limit')) if 'limit' in params else None,
-        'start': int(params.pop('start')) if 'start' in params else None,
-        'inflated': params.pop('inflated') == 'True' if 'inflated' in params else True,
-        'page': int(params.pop('page', -1)),
-        'pageSize': int(params.pop('pageSize', 0)),
-        'expand': params.pop('expand').split(',') if 'expand' in params else None,
-        'order': params.pop('order', None) or None,
-        'locale': params.pop('locale', orb.system.locale())
-    }
-
-    # generate a simple query object
-    q_build = {col: params[col] for col in params if model.schema().column(col)}
-    if q_build:
-        options['where'] = Q.build(q_build)
-
-    db_options = orb.DatabaseOptions(**options)
-    lookup = orb.LookupOptions(**options)
-
     # returns the lookup, database options, search terms and original options
-    output = {'lookup': lookup, 'options': db_options, 'terms': terms}
+    output = {
+        'terms': params.pop('terms', ''),
+        'lookup': get_lookup(request, model=model, params=params),
+        'options': get_context(request, params=params)
+    }
     output.update(params)
     return output

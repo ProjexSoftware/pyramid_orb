@@ -25,4 +25,5 @@ __version__ = '%s.%s.%s' % __version_info__
 
 
 def includeme(config):
+    # define a new renderer for json
     config.add_renderer('json2', factory='pyramid_orb.renderer.json2_renderer_factory')
