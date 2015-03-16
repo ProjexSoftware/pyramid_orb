@@ -61,31 +61,28 @@ class orb_view_config(object):
         model = self.model()
 
         # record getter
-        params = collect_params(request)
-        params.setdefault('pageSize', settings['default_page_size'])
+        info = collect_query_info(model, request)
+        info['lookup'].pageSize = info['lookup'].pageSize or settings['default_page_size']
 
-        id = int(request.matchdict.get('id') or params.get('id') or 0)
+        id = int(request.matchdict.get('id') or info.get('id') or 0)
 
         # grab an individual record from the request
-        def get_record(model, id, params):
+        def get_record(model, id, info):
             def getter():
-                record = model(id)
-                record.setRecordLocale(params.get('locale'))
-                return record
+                return model(id, options=info['options'])
             return getter
 
         # collect a record set based on the information from the request
-        def select_records(model, params):
+        def select_records(model, info):
             def select(**options):
-                info = collect_query_info(model, params)
                 info['lookup'].update(options)
                 info['options'].update(options)
                 method = getattr(model, info.get('method', 'select'), model.select)
                 return method(**info)
             return select
 
-        request.record = get_record(model, id, params)
-        request.records = select_records(model, params)
+        request.record = get_record(model, id, info)
+        request.records = select_records(model, info)
 
         return True
 

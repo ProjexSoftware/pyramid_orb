@@ -4,7 +4,7 @@ import projex.text
 
 from orb import errors
 from projex.lazymodule import lazy_import
-from pyramid_orb.utils import collect_params, collect_query_info
+from pyramid_orb.utils import collect_params, collect_query_info, get_context
 
 from .service import RestService
 
@@ -30,8 +30,10 @@ class Collection(RestService):
         except ValueError:
             id = key
 
+        info = collect_query_info(self.model, self.request)
+
         try:
-            record = self.model(id)
+            record = self.model(id, **info)
         except errors.RecordNotFound:
             if type(id) == int:
                 raise
@@ -51,7 +53,7 @@ class Collection(RestService):
         else:
             # use a classmethod
             if getattr(method, '__lookup__', False):
-                return RecordSetCollection(self.request, method(), parent=self, name=method.__name__)
+                return RecordSetCollection(self.request, method(**info), parent=self, name=method.__name__)
             else:
                 raise KeyError(key)
 
@@ -60,9 +62,10 @@ class Collection(RestService):
         return self.model.select(**info)
 
     def post(self):
+        values = collect_params(self.request)
+        info = collect_query_info(self.model, self.request)
         with orb.Transaction():
-            values = collect_params(self.request)
-            return self.model.createRecord(**values)
+            return self.model.createRecord(values, **info)
 
 
 class RecordSetCollection(RestService):
@@ -78,9 +81,11 @@ class RecordSetCollection(RestService):
         except ValueError:
             id = key
 
+        info = collect_query_info(self.model, self.request)
+
         # lookup the table by the id
         try:
-            record = self.recordset.table()(id)
+            record = self.model(id, **info)
         except errors.RecordNotFound:
             if type(id) == int:
                 raise
@@ -97,19 +102,23 @@ class RecordSetCollection(RestService):
         else:
             raise KeyError(key)
 
+    @property
+    def model(self):
+        return self.recordset.table()
+
     def get(self):
-        info = collect_query_info(self.recordset.table(), self.request)
-        return self.recordset.refine(**info)
+        return self.recordset
 
     def put(self):
+        values = collect_params(self.request)
         with orb.Transaction():
-            params = collect_params(self.request)
-            return self.recordset.update(**params)
+            return self.recordset.update(**values)
 
     def post(self):
+        values = collect_params(self.request)
+        info = collect_query_info(self.model, self.request)
         with orb.Transaction():
-            params = collect_params(self.request)
-            return self.recordset.createRecord(**params)
+            return self.recordset.createRecord(values, **info)
 
 
 class PipeRecordSetCollection(RestService):
@@ -125,15 +134,17 @@ class PipeRecordSetCollection(RestService):
         except ValueError:
             id = key
 
+        info = collect_query_info(self.model, self.request)
+
         # lookup the table by the id
         try:
-            record = self.recordset.table()(id)
+            record = self.model(id, **info)
         except errors.RecordNotFound:
             if type(id) == int:
                 raise
         else:
             if not self.recordset.hasRecord(record):
-                raise errors.RecordNotFound(self.recordset.table(), id)
+                raise errors.RecordNotFound(self.model, id)
             else:
                 return rest.PipedResource(self.request, self.recordset, record, self)
 
@@ -143,17 +154,21 @@ class PipeRecordSetCollection(RestService):
         else:
             raise KeyError(key)
 
+    @property
+    def model(self):
+        return self.recordset.table()
+
     def get(self):
-        model = self.recordset.table()
-        return self.recordset.refine(**collect_query_info(model, self.request))
+        return self.recordset
 
     def put(self):
+        values = collect_params(self.request)
         with orb.Transaction():
-            params = collect_params(self.request)
-            return self.recordset.update(**params)
+            return self.recordset.update(**values)
 
     def post(self):
+        info = collect_query_info(self.model, self.request)
+        values = collect_params(self.request)
         with orb.Transaction():
-            params = collect_params(self.request)
-            return self.recordset.createRecord(**params)
+            return self.recordset.createRecord(values, **info)
 
