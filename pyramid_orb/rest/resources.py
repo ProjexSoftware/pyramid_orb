@@ -30,11 +30,14 @@ class Resource(RestService):
 
             # load a pipe resource
             if type(method.__func__).__name__ == 'Pipe':
-                return rest.PipeRecordSetCollection(self.request, method(**info), self, name=key)
+                records = method(**info)
+                return rest.PipeRecordSetCollection(self.request, records, self, name=key)
             elif type(method.__func__).__name__ == 'reverselookupmethod':
-                return rest.RecordSetCollection(self.request, method(**info), self, name=key)
+                records = method(**info)
+                return rest.RecordSetCollection(self.request, records, self, name=key)
             elif getattr(method.__func__, '__lookup__', None):
-                return rest.RecordSetCollection(self.request, method(**info), self, name=key)
+                records = method(**info)
+                return rest.RecordSetCollection(self.request, records, self, name=key)
             else:
                 column = self.record.schema().column(key)
                 if column and column.isReference():
