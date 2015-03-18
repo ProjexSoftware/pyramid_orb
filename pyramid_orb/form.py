@@ -36,7 +36,7 @@ class OrbForm(object):
             values = self.submittedValues()
 
         if not self.record().isRecord():
-            self._record = self._record.createRecord(values, request=self.request)
+            self._record = self._record.createRecord(values, request=self._request)
         else:
             self._record.update(**values)
             self._record.commit()
