@@ -26,22 +26,17 @@ class Resource(RestService):
         if not method:
             raise KeyError(key)
         else:
-            info = collect_query_info(type(self.record), self.request)
+            context = get_context(self.request)
 
-            # load a pipe resource
-            if type(method.__func__).__name__ == 'Pipe':
-                records = method(**info)
-                return rest.PipeRecordSetCollection(self.request, records, self, name=key)
-            elif type(method.__func__).__name__ == 'reverselookupmethod':
-                records = method(**info)
-                return rest.RecordSetCollection(self.request, records, self, name=key)
-            elif getattr(method.__func__, '__lookup__', None):
-                records = method(**info)
-                return rest.RecordSetCollection(self.request, records, self, name=key)
-            else:
-                column = self.record.schema().column(key)
-                if column and column.isReference():
-                    return rest.Resource(self.request, method(**info), self)
+            # return a resource
+            column = self.record.schema().column(key)
+            if column and column.isReference():
+                return rest.Resource(self.request, method(options=context), self)
+
+            # return a lookup
+            elif type(method.__func__).__name__ in ('Pipe', 'reverselookupmethod') or \
+                 getattr(method.__func__, '__lookup__', None):
+                return rest.RecordSetCollection(self.request, method(options=context), parent=self, name=key)
 
         raise KeyError(key)
 
@@ -73,8 +68,8 @@ class PipedResource(RestService):
     def __init__(self, request, recordset, record, parent=None):
         super(PipedResource, self).__init__(request, parent, name=str(id))
 
-        self.record = record
         self.recordset = recordset
+        self.record = record
 
     def get(self):
         return self.record
