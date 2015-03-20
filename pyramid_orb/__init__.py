@@ -18,7 +18,7 @@ __email__ = 'eric.hulser@gmail.com'
 __depends__ = []
 __major__ = 1
 __minor__ = 1
-__revision__ = 18
+__revision__ = 19
 
 __version_info__ = (__major__, __minor__, __revision__)
 __version__ = '%s.%s.%s' % __version_info__
