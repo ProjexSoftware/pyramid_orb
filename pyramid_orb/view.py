@@ -1,7 +1,7 @@
 import projex.text
 
 from pyramid.view import view_config
-from .utils import collect_params, collect_query_info
+from .utils import collect_query_info
 
 
 class orb_view_config(object):
@@ -34,9 +34,9 @@ class orb_view_config(object):
         new_settings.setdefault('custom_predicates', [])
         predicates = new_settings['custom_predicates']
 
-        def lookup_records(custom_settings):
+        def lookup_records(custom):
             def call(context, request):
-                return self.lookup_records(context, request, custom_settings)
+                return self.lookup_records(context, request, custom)
             return call
 
         custom_settings = {

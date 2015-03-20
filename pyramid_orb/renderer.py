@@ -1,4 +1,3 @@
-import orb.rest
 import projex.rest
 from pyramid.renderers import JSON
 

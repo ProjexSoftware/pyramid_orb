@@ -4,7 +4,7 @@ import projex.text
 
 from orb import errors
 from projex.lazymodule import lazy_import
-from pyramid_orb.utils import collect_params, collect_query_info, get_context
+from pyramid_orb.utils import collect_params, collect_query_info, get_context, get_lookup
 
 from .service import RestService
 
@@ -31,9 +31,10 @@ class Collection(RestService):
             id = key
 
         context = get_context(self.request)
+        lookup = get_lookup(self.request)
 
         try:
-            record = self.model(id, options=context)
+            record = self.model(id, expand=lookup.expand, options=context)
         except errors.RecordNotFound:
             if type(id) == int:
                 raise
@@ -53,7 +54,7 @@ class Collection(RestService):
         else:
             # use a classmethod
             if getattr(method, '__lookup__', False):
-                return RecordSetCollection(self.request, method(options=context), parent=self, name=method.__name__)
+                return RecordSetCollection(self.request, method(expand=lookup.expand, options=context), parent=self, name=method.__name__)
             else:
                 raise KeyError(key)
 
@@ -83,10 +84,11 @@ class RecordSetCollection(RestService):
             id = key
 
         context = get_context(self.request)
+        lookup = get_lookup(self.request)
 
         # lookup the table by the id
         try:
-            record = self.model(id, options=context)
+            record = self.model(id, expand=lookup.expand, options=context)
         except errors.RecordNotFound:
             if type(id) == int:
                 raise

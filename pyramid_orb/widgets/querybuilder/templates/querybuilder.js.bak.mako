@@ -113,7 +113,7 @@
                             new QueryBuilder(this, options));
                 }
             });
-        }
+        };
 
         // automatically load data for the builder objects
         $(document).ready(function () {
@@ -143,7 +143,7 @@
                             widget : null
                         }
                     ]
-                },
+                }
             ];
             $('[data-toggle="querybuilder"]').queryBuilder({rules : $rules});
         });

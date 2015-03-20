@@ -1,8 +1,7 @@
 import orb
 import projex.text
 
-from orb import errors
-from pyramid_orb.utils import collect_params, get_context, collect_query_info
+from pyramid_orb.utils import collect_params, get_context
 from projex.lazymodule import lazy_import
 
 from .service import RestService
@@ -41,7 +40,7 @@ class Resource(RestService):
         raise KeyError(key)
 
     def get(self):
-        return self.record
+        return self.record.json()
 
     def patch(self):
         values = collect_params(self.request)

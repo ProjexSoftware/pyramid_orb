@@ -237,7 +237,7 @@
     })(jQuery, window, document);
 
     $(document).ready(function () {
-        options = {
+        var options = {
             rules: {
                 displayName: {
                     name: 'Display name',
@@ -292,7 +292,7 @@
                     }
                 }
             }
-        }
+        };
         $('[data-toggle="querybuilder"]').queryBuilder(options);
     });
 </script>
