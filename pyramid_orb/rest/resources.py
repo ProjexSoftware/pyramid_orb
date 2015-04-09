@@ -44,19 +44,17 @@ class Resource(RestService):
 
     def patch(self):
         values = collect_params(self.request)
-        with orb.Transaction():
-            record = self.record
-            record.update(**values)
-            record.commit()
-            return record
+        record = self.record
+        record.update(**values)
+        record.commit()
+        return record
 
     def put(self):
         values = collect_params(self.request)
-        with orb.Transaction():
-            record = self.record
-            record.update(**values)
-            record.commit()
-            return record
+        record = self.record
+        record.update(**values)
+        record.commit()
+        return record
 
     def delete(self):
         return self.record.remove()
@@ -75,21 +73,18 @@ class PipedResource(RestService):
 
     def patch(self):
         values = collect_params(self.request)
-        with orb.Transaction():
-            record = self.record
-            record.update(**values)
-            record.commit()
-            return record
+        record = self.record
+        record.update(**values)
+        record.commit()
+        return record
 
     def put(self):
         values = collect_params(self.request)
-        with orb.Transaction():
-            record = self.record
-            record.update(**values)
-            record.commit()
-            return record
+        record = self.record
+        record.update(**values)
+        record.commit()
+        return record
 
     def delete(self):
-        with orb.Transaction():
-            self.recordset.removeRecord(self.record)
-            return {}
+        self.recordset.removeRecord(self.record)
+        return {}

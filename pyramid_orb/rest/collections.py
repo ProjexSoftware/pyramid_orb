@@ -65,8 +65,7 @@ class Collection(RestService):
     def post(self):
         values = collect_params(self.request)
         context = get_context(self.request)
-        with orb.Transaction():
-            return self.model.createRecord(values, options=context)
+        return self.model.createRecord(values, options=context)
 
 
 class RecordSetCollection(RestService):
@@ -113,12 +112,10 @@ class RecordSetCollection(RestService):
 
     def put(self):
         values = collect_params(self.request)
-        with orb.Transaction():
-            return self.recordset.update(**values)
+        return self.recordset.update(**values)
 
     def post(self):
         values = collect_params(self.request)
         context = get_context(self.request)
-        with orb.Transaction():
-            return self.recordset.createRecord(values, options=context)
+        return self.recordset.createRecord(values, options=context)
 
