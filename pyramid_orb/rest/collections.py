@@ -54,7 +54,15 @@ class Collection(RestService):
         else:
             # use a classmethod
             if getattr(method, '__lookup__', False):
-                return RecordSetCollection(self.request, method(expand=lookup.expand, options=context), parent=self, name=method.__name__)
+                result = method(expand=lookup.expand, options=context)
+                if isinstance(result, orb.RecordSet):
+                    return RecordSetCollection(self.request, result, parent=self, name=method.__name__)
+                elif isinstance(result, orb.Table):
+                    return rest.Resource(self.request, result, self)
+                elif result is None:
+                    return rest.ObjectService(self.request, {}) # blank JSON object
+                else:
+                    return rest.ObjectService(self.request, result)
             else:
                 raise KeyError(key)
 
@@ -111,7 +119,13 @@ class RecordSetCollection(RestService):
         return self.recordset.refine(**info)
 
     def put(self):
-        values = collect_params(self.request)
+        try:
+            records = self.request.json_body
+            if type(records) == list:
+                values = {'records': records}
+        except StandardError:
+            values = collect_params(self.request)
+
         return self.recordset.update(**values)
 
     def post(self):

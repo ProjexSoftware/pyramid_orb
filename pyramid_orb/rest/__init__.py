@@ -1,5 +1,5 @@
 from .factory import ApiFactory
-from .service import Service, ClassService, ModuleService, RestCallable
+from .service import Service, ClassService, ModuleService, RestCallable, ObjectService
 from .collections import Collection, RecordSetCollection
 from .resources import Resource, PipedResource
 

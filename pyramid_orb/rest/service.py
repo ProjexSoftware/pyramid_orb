@@ -221,3 +221,12 @@ class ClassService(Service):
             raise HTTPBadRequest()
         else:
             return callable()
+
+class ObjectService(RestService):
+    def __init__(self, request, response, parent=None, name=None):
+        super(ObjectService, self).__init__(request, name, parent)
+
+        self.response = response
+
+    def get(self):
+        return self.response

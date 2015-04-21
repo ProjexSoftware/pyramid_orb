@@ -35,7 +35,16 @@ class Resource(RestService):
             # return a lookup
             elif type(method.__func__).__name__ in ('Pipe', 'reverselookupmethod') or \
                  getattr(method.__func__, '__lookup__', None):
-                return rest.RecordSetCollection(self.request, method(options=context), parent=self, name=key)
+
+                response = method(options=context)
+                if isinstance(response, orb.RecordSet):
+                    return rest.RecordSetCollection(self.request, response, parent=self, name=key)
+                elif isinstance(response, orb.Table):
+                    return rest.Resource(self.request, response, parent=None)
+                elif response is None:
+                    return rest.ObjectService(self.request, {})
+                else:
+                    return rest.ObjectService(self.request, response)
 
         raise KeyError(key)
 
