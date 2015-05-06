@@ -17,6 +17,7 @@ class ApiFactory(dict):
         self._analytics = analytics
 
         # services
+        self._factories = {}
         self._models = {}
         self._modules = {}
         self._classes = {}
@@ -35,8 +36,12 @@ class ApiFactory(dict):
         Exposes a given service to this API.
         """
 
+        # expose a sub-factory
+        if isinstance(service, ApiFactory):
+            self._factories[name] = service
+
         # expose an ORB table dynamically as a service
-        if orb.Table.typecheck(service) or orb.View.typecheck(service):
+        elif orb.Table.typecheck(service) or orb.View.typecheck(service):
             if not name:
                 name = projex.text.underscore(service.schema().name())
                 name = projex.text.pluralize(name)
@@ -74,6 +79,11 @@ class ApiFactory(dict):
         :return     <pyramid_orb.rest.Service>
         """
         service = Service(request)
+
+        # create dynamic factory resources
+        for name, factory in self._factories.items():
+            sub_api = factory.factory(request)
+            service[name] = sub_api
 
         # create dynamic services based on exposed modules
         for name, module in self._modules.items():
