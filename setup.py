@@ -16,7 +16,7 @@ setup(
     packages=find_packages(),
     install_requires=[
         'pyramid',
-        'orb'
+        'orb-api'
     ],
     tests_require=[],
     long_description='Bindings for the pyramid webframework and the ORB database ORM library.',
