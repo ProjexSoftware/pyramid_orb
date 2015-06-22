@@ -32,7 +32,7 @@ def get_context(request, params=None):
         params = collect_params(request)
 
     context_options = {
-       'inflated': params.pop('inflated') == 'True' if 'inflated' in params else True,
+        'inflated': params.pop('inflated') == 'True' if 'inflated' in params else True,
         'locale': params.pop('locale', None),
         'timezone': params.pop('timezone', None),
         'request': request
@@ -54,7 +54,7 @@ def get_lookup(request, model=None, params=None):
     lookup_options = {
         'columns': params.pop('columns').split(',') if 'columns' in params else None,
         'where': Q.build(q_build) if q_build else None,
-        'order': params.pop('order', None) or None,
+        'order': params.pop('order', params.pop('orderBy', None)) or None,
         'expand': params.pop('expand').split(',') if 'expand' in params else None,
         'start': int(params.pop('start')) if 'start' in params else None,
         'limit': int(params.pop('limit')) if 'limit' in params else None,

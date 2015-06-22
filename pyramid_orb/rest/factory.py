@@ -3,7 +3,7 @@ import orb
 import projex.text
 
 from pyramid.httpexceptions import HTTPForbidden
-from .service import Service, ModuleService, ClassService
+from .service import Service, ModuleService, ClassService, FunctionService
 from .collections import Collection
 
 
@@ -21,6 +21,7 @@ class ApiFactory(dict):
         self._models = {}
         self._modules = {}
         self._classes = {}
+        self._functions = {}
         self._services = {}
 
     def analytics(self):
@@ -63,6 +64,13 @@ class ApiFactory(dict):
 
             self._classes[name] = service
 
+        # expose a function dynamically as a service
+        elif inspect.isfunction(service):
+            if not name:
+                name = service.__name__
+
+            self._functions[name] = service
+
         # expose a service directly
         else:
             if not name:
@@ -92,6 +100,10 @@ class ApiFactory(dict):
         # create dynamic services based on an exposed class
         for name, cls in self._classes.items():
             service[name] = ClassService(request, cls, parent=service, name=name)
+
+        # create dynamic services based on an exposed function
+        for name, func in self._functions.items():
+            service[name] = FunctionService(request, func, parent=service, name=name)
 
         # create dynamic services based on exposed models
         for name, model in self._models.items():

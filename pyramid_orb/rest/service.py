@@ -222,6 +222,15 @@ class ClassService(Service):
         else:
             return callable()
 
+class FunctionService(Service):
+    def __init__(self, request, function, parent=None, name=None):
+        super(FunctionService, self).__init__(request, name or cls.__name__, parent)
+
+        self.function = function
+
+    def process(self):
+        return self.function(self.request)
+
 class ObjectService(RestService):
     def __init__(self, request, response, parent=None, name=None):
         super(ObjectService, self).__init__(request, name, parent)
