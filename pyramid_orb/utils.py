@@ -45,24 +45,29 @@ def get_lookup(request, model=None, params=None):
     if params is None:
         params = collect_params(request)
 
-    # generate a simple query object
-    if model:
-        q_build = {col: params.pop(col) for col in params.keys() if model.schema().column(col)}
+    # extract JSON lookup commands (using the orb javascript library for frontend querying)
+    lookup = params.pop('lookup', None)
+    if lookup:
+        return orb.LookupOptions.fromJSON(lookup)
     else:
-        q_build = None
+        # generate a simple query object
+        if model:
+            q_build = {col: params.pop(col) for col in params.keys() if model.schema().column(col)}
+        else:
+            q_build = None
 
-    lookup_options = {
-        'columns': params.pop('columns').split(',') if 'columns' in params else None,
-        'where': Q.build(q_build) if q_build else None,
-        'order': params.pop('order', params.pop('orderBy', None)) or None,
-        'expand': params.pop('expand').split(',') if 'expand' in params else None,
-        'start': int(params.pop('start')) if 'start' in params else None,
-        'limit': int(params.pop('limit')) if 'limit' in params else None,
-        'page': int(params.pop('page', -1)),
-        'pageSize': int(params.pop('pageSize', 0))
-    }
+        lookup_options = {
+            'columns': params.pop('columns').split(',') if 'columns' in params else None,
+            'where': Q.build(q_build) if q_build else None,
+            'order': params.pop('order', params.pop('orderBy', None)) or None,
+            'expand': params.pop('expand').split(',') if 'expand' in params else None,
+            'start': int(params.pop('start')) if 'start' in params else None,
+            'limit': int(params.pop('limit')) if 'limit' in params else None,
+            'page': int(params.pop('page', -1)),
+            'pageSize': int(params.pop('pageSize', 0))
+        }
 
-    return orb.LookupOptions(**lookup_options)
+        return orb.LookupOptions(**lookup_options)
 
 
 def collect_query_info(model, request):
