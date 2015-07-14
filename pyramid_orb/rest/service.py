@@ -40,7 +40,7 @@ class Service(dict):
         raise NotImplementedError
 
     def permit(self):
-        return re.sub('\.\d+\.', 'id', self.request.method.lower() + '.' + '.'.join(self.request.traversed))
+        return self.request.method.lower() + '.' + '.'.join(self.request.traversed)
 
 
 # noinspection PyMethodOverriding
