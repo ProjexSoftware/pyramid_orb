@@ -1,7 +1,7 @@
 import orb
 import projex.text
 
-from pyramid_orb.utils import collect_params, get_context
+from pyramid_orb.utils import collect_params, get_context, get_lookup
 from projex.lazymodule import lazy_import
 
 from .service import RestService
@@ -26,6 +26,7 @@ class Resource(RestService):
             raise KeyError(key)
         else:
             context = get_context(self.request)
+            lookup = get_lookup(self.request)
 
             # return a resource
             column = self.record.schema().column(key)
@@ -36,7 +37,7 @@ class Resource(RestService):
             elif type(method.__func__).__name__ in ('Pipe', 'reverselookupmethod') or \
                  getattr(method.__func__, '__lookup__', None):
 
-                response = method(options=context)
+                response = method(expand=lookup.expand, options=context)
                 if isinstance(response, orb.RecordSet):
                     return rest.RecordSetCollection(self.request, response, parent=self, name=key)
                 elif isinstance(response, orb.Table):
