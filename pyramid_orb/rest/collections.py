@@ -120,9 +120,9 @@ class RecordSetCollection(RestService):
 
     def put(self):
         try:
-            records = self.request.json_body
-            if type(records) == list:
-                values = {'records': records}
+            values = self.request.json_body
+            if type(values) == list:
+                values = {'records': values}
         except StandardError:
             values = collect_params(self.request)
 
