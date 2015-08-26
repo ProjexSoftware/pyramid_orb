@@ -63,6 +63,7 @@ def get_lookup(request, model=None, params=None):
             'expand': params.pop('expand').split(',') if 'expand' in params else None,
             'start': int(params.pop('start')) if 'start' in params else None,
             'limit': int(params.pop('limit')) if 'limit' in params else None,
+            'returning': params.pop('returning', None),
             'page': int(params.pop('page', -1)),
             'pageSize': int(params.pop('pageSize', 0))
         }
