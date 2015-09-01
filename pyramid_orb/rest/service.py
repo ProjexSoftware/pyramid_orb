@@ -1,6 +1,7 @@
 import orb
 import re
 
+from pydoc import render_doc
 from pyramid.httpexceptions import HTTPBadRequest
 
 
@@ -90,6 +91,14 @@ class RestService(Service):
         except AttributeError:
             raise HTTPBadRequest()
         else:
+            # check to see if we're looking for help
+            if 'help' in self.request.params:
+                docgen = getattr(method, 'help', None)
+                if docgen:
+                    return {'message': docgen(self.request)}
+                else:
+                    return {'message': re.sub('\w\x08', '', render_doc(method))}
+
             output = method()
 
             # store additional information in the response header for record sets
@@ -183,6 +192,14 @@ class ModuleService(Service):
         except KeyError:
             raise HTTPBadRequest()
         else:
+            # check to see if we're looking for help
+            if 'help' in self.request.params:
+                docgen = getattr(callable.__callable__, 'help', None)
+                if docgen:
+                    return {'message': docgen(self.request)}
+                else:
+                    return {'message': re.sub('\w\x08', '', render_doc(callable.__callable__))}
+
             return callable(self.request)
 
     def permit(self):
@@ -221,6 +238,14 @@ class ClassService(Service):
         except KeyError:
             raise HTTPBadRequest()
         else:
+            # check to see if we're looking for help
+            if 'help' in self.request.params:
+                docgen = getattr(callable.__callable__, 'help', None)
+                if docgen:
+                    return {'message': docgen(self.request)}
+                else:
+                    return {'message': re.sub('\w\x08', '', render_doc(callable.__callable__))}
+
             return callable()
 
 class FunctionService(Service):
@@ -230,6 +255,14 @@ class FunctionService(Service):
         self.function = function
 
     def process(self):
+        # check to see if we're looking for help
+        if 'help' in self.request.params:
+            docgen = getattr(self.function, 'help', None)
+            if docgen:
+                return {'message': docgen(self.request)}
+            else:
+                return {'message': re.sub('\w\x08', '', render_doc(self.function))}
+
         return self.function(self.request)
 
 class ObjectService(RestService):
