@@ -50,7 +50,8 @@ class Resource(RestService):
         raise KeyError(key)
 
     def get(self):
-        return self.record.json()
+        lookup = get_lookup(self.request)
+        return self.record.json(lookup=lookup)
 
     def patch(self):
         values = collect_params(self.request)
