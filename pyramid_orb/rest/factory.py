@@ -36,19 +36,18 @@ class ApiFactory(dict):
         """
         Exposes a given service to this API.
         """
+        try:
+            is_model = issubclass(service, orb.Model)
+        except StandardError:
+            is_model = False
 
         # expose a sub-factory
         if isinstance(service, ApiFactory):
             self._factories[name] = service
 
         # expose an ORB table dynamically as a service
-        elif isinstance(service, orb.Model):
-            if not name:
-                name = projex.text.underscore(service.schema().name())
-                name = projex.text.pluralize(name)
-
-            # store the given model
-            self._models[name] = service
+        elif is_model:
+            self._models[service.schema().dbname()] = service
 
         # expose a module dynamically as a service
         elif inspect.ismodule(service):
