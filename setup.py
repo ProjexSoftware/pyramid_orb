@@ -41,7 +41,7 @@ class tag(Command):
 
         # tag this new release version
         if not self.no_tag:
-            version = '.'.join([result.group(1), result.group(2), result.group(3)])
+            version = '.'.join([result.group(1), result.group(2), 'dev' + result.group(3)])
 
             print 'creating git tag:', 'v' + version
 
