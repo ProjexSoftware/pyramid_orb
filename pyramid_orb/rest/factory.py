@@ -4,7 +4,7 @@ import projex.text
 
 from pyramid.httpexceptions import HTTPForbidden
 from .service import Service, ModuleService, ClassService, FunctionService
-from .collections import Collection
+from .collections import ModelService
 
 
 class ApiFactory(dict):
@@ -106,11 +106,8 @@ class ApiFactory(dict):
 
         # create dynamic services based on exposed models
         for name, model in self._models.items():
-            # support custom collection services per model
-            cls = getattr(model, 'Collection', Collection)
-
             # define the service
-            service[name] = cls(request, model, parent=service, name=name)
+            service[name] = ModelService(request, model, parent=service, name=name)
 
         # create static services
         for name, sub_service in self._services.items():
@@ -135,7 +132,7 @@ class ApiFactory(dict):
 
             return request.context.process()
 
-    def serve(self, config, path, route_name=None):
+    def serve(self, config, path, route_name=None, **view_options):
         """
         Serves this API from the inputted root path
         """
@@ -144,7 +141,7 @@ class ApiFactory(dict):
 
         # configure the route and the path
         config.add_route(route_name, path, factory=self.factory)
-        config.add_view(self.process, route_name=route_name, renderer='json2')
+        config.add_view(self.process, route_name=route_name, renderer='json2', **view_options)
 
     def testPermits(self, request, permission):
         """

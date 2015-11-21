@@ -5,6 +5,7 @@ import projex.text
 from orb import errors
 from projex.lazymodule import lazy_import
 from pyramid_orb.utils import collect_params, collect_query_info, get_context
+from pyramid.httpexceptions import HTTPForbidden
 
 from .service import RestService
 
@@ -18,6 +19,10 @@ class ModelService(RestService):
             name = model.schema().dbname()
 
         super(ModelService, self).__init__(request, parent, name=name)
+
+        acl = getattr(model, '__acl__', None)
+        if acl is not None and self.request.method.lower() not in acl:
+            raise HTTPForbidden()
 
         self.model = model
         self.method = method
@@ -37,7 +42,7 @@ class ModelService(RestService):
             if type(id) == int:
                 raise
         else:
-            return rest.Resource(self.request, record, self)
+            return rest.RecordService(self.request, record, self)
 
         method = getattr(self.model, key, None) or \
                  getattr(self.model, projex.text.underscore(key), None) or \
@@ -71,7 +76,7 @@ class ModelService(RestService):
     def post(self):
         values = collect_params(self.request)
         context = get_context(self.request)
-        return self.model.createRecord(values, options=context)
+        return self.model.create(values, context=context)
 
 
 class CollectionService(RestService):

@@ -1,7 +1,7 @@
 from .factory import ApiFactory
 from .service import Service, ClassService, ModuleService, RestCallable, ObjectService
-from .collections import Collection, RecordsCollection
-from .resources import Resource, PipedResource
+from .collections import ModelService, CollectionService
+from .resources import RecordService, PipedRecordResource
 
 
 class expose(object):

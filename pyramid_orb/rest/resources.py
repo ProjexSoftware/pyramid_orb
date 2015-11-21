@@ -30,7 +30,7 @@ class RecordService(RestService):
             # return a resource
             column = self.record.schema().column(key)
             if column and column.isReference():
-                return rest.Resource(self.request, method(options=context), self)
+                return rest.RecordResource(self.request, method(context=context), self)
 
             # return a lookup
             elif getattr(method.__func__, '__lookup__', None):
