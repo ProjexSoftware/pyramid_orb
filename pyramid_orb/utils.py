@@ -39,19 +39,18 @@ def get_context(request, model=None, params=None):
 
 
     context_options = {
-        'inflated': params.pop('inflated') == 'True' if 'inflated' in params else True,
+        'inflated': params.pop('inflated', 'True') == 'True',
         'locale': params.pop('locale', None),
         'timezone': params.pop('timezone', None),
-        'request': request,
         'columns': params.pop('columns').split(',') if 'columns' in params else None,
         'where': Q.build(q_build) if q_build else None,
         'order': params.pop('order', params.pop('orderBy', None)) or None,
         'expand': params.pop('expand').split(',') if 'expand' in params else None,
-        'start': int(params.pop('start')) if 'start' in params else None,
-        'limit': int(params.pop('limit')) if 'limit' in params else None,
         'returning': params.pop('returning', None),
-        'page': int(params.pop('page', -1)),
-        'pageSize': int(params.pop('pageSize', 0))
+        'start': int(params.pop('start', 0)) or None,
+        'limit': int(params.pop('limit', 0)) or None,
+        'page': int(params.pop('page', 0)) or None,
+        'pageSize': int(params.pop('pageSize', 0)) or None
     }
 
     # extract JSON lookup commands (using the orb javascript library for frontend querying)
