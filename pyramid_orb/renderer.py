@@ -1,6 +1,4 @@
 # need to import this module to register the proper serializers
-import orb.rest
-
 import projex.rest
 from pyramid.renderers import JSON
 

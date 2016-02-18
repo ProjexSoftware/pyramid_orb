@@ -33,7 +33,7 @@ def get_context(request, model=None, params=None):
 
     # generate a simple query object
     if model:
-        q_build = {col: params.pop(col) for col in params.keys() if model.schema().column(col)}
+        q_build = {col: params.pop(col) for col in params.keys() if model.schema().column(col, raise_=False)}
     else:
         q_build = None
 

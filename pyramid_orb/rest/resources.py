@@ -28,7 +28,7 @@ class RecordService(RestService):
             context = get_context(self.request)
 
             # return a resource
-            column = self.record.schema().column(key)
+            column = self.record.schema().column(key, raise_=False)
             if column and column.isReference():
                 return rest.RecordResource(self.request, method(context=context), self)
 

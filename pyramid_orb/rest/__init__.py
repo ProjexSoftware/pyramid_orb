@@ -1,4 +1,4 @@
-from .factory import ApiFactory
+from .api import ApiFactory
 from .service import Service, ClassService, ModuleService, RestCallable, ObjectService
 from .collections import ModelService, CollectionService
 from .resources import RecordService, PipedRecordResource

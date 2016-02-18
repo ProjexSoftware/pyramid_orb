@@ -8,13 +8,12 @@ from .collections import ModelService
 
 
 class ApiFactory(dict):
-    def __init__(self, version='1.0.0', authenticator=None, analytics=None):
+    def __init__(self, version='1.0.0', authenticator=None):
         super(ApiFactory, self).__init__()
 
         # custom properties
         self._authenticator = authenticator
         self._version = version
-        self._analytics = analytics
 
         # services
         self._factories = {}
@@ -23,14 +22,6 @@ class ApiFactory(dict):
         self._classes = {}
         self._functions = {}
         self._services = {}
-
-    def analytics(self):
-        """
-        Returns an implementation of analytics tracking.
-
-        :return     <pyramid_orb.analytics.Analytics> || None
-        """
-        return self._analytics
 
     def expose(self, service, name=''):
         """
@@ -124,13 +115,18 @@ class ApiFactory(dict):
 
         # otherwise, process the request context
         else:
-            if self.analytics():
-                self.analytics().report(request)
-
             if not self.testPermits(request, request.context.permit()):
                 raise HTTPForbidden()
-
             return request.context.process()
+
+    def handle_error(self, request):
+        err = request.exception
+        status = getattr(err, 'status', projex.text.pretty(type(err).__name__))
+        code = getattr(err, 'code', 500)
+
+        request.response.status = '{0} {1}'.format(code, status)
+
+        return {'error': projex.text.nativestring(err)}
 
     def serve(self, config, path, route_name=None, **view_options):
         """
@@ -141,7 +137,20 @@ class ApiFactory(dict):
 
         # configure the route and the path
         config.add_route(route_name, path, factory=self.factory)
-        config.add_view(self.process, route_name=route_name, renderer='json2', **view_options)
+        config.add_view(
+            self.process,
+            route_name=route_name,
+            renderer='json2',
+            accept='application/json',
+            **view_options
+        )
+        # config.add_view(
+        #     self.handle_error,
+        #     route_name=route_name,
+        #     renderer='json2',
+        #     accept='application/json',
+        #     context=StandardError
+        # )
 
     def testPermits(self, request, permission):
         """
