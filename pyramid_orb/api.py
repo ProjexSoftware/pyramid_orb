@@ -3,8 +3,59 @@ import orb
 import projex.text
 
 from pyramid.httpexceptions import HTTPForbidden
-from .service import Service, ModuleService, ClassService, FunctionService
-from .collections import ModelService
+from .services import *
+
+
+class endpoint(object):
+    @staticmethod
+    def get(**options):
+        def setup(callable):
+            name = options.pop('name', callable.__name__)
+            return RestfulService(name,
+                                  callable,
+                                  method='GET',
+                                  permit=options.pop('permission', '__DEFAULT__'))
+        return setup
+
+    @staticmethod
+    def post(**options):
+        def setup(callable):
+            name = options.pop('name', callable.__name__)
+            return RestfulService(name,
+                                  callable,
+                                  method='POST',
+                                  permit=options.pop('permission', '__DEFAULT__'))
+        return setup
+
+    @staticmethod
+    def delete(**options):
+        def setup(callable):
+            name = options.pop('name', callable.__name__)
+            return RestfulService(name,
+                                  callable,
+                                  method='DELETE',
+                                  permit=options.pop('permission', '__DEFAULT__'))
+        return setup
+
+    @staticmethod
+    def put(**options):
+        def setup(callable):
+            name = options.pop('name', callable.__name__)
+            return RestfulService(name,
+                                  callable,
+                                  method='PUT',
+                                  permit=options.pop('permission', '__DEFAULT__'))
+        return setup
+
+    @staticmethod
+    def patch(**options):
+        def setup(callable):
+            name = options.pop('name', callable.__name__)
+            return RestfulService(name,
+                                  callable,
+                                  method='PATCH',
+                                  permit=options.pop('permission', '__DEFAULT__'))
+        return setup
 
 
 class ApiFactory(dict):
@@ -74,9 +125,9 @@ class ApiFactory(dict):
 
         :param      request | <pyramid.request.Request>
 
-        :return     <pyramid_orb.rest.Service>
+        :return     <pyramid_orb.services.AbstractService>
         """
-        service = Service(request)
+        service = AbstractService(request)
 
         # create dynamic factory resources
         for name, factory in self._factories.items():

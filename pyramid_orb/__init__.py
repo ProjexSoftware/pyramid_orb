@@ -48,7 +48,7 @@ def includeme(config):
     api_root = settings.get('orb.api.root')
 
     if api_root:
-        from pyramid_orb.rest import ApiFactory
+        from .api import ApiFactory
 
         api = ApiFactory(version=settings.get('orb.api.version', '1.0.0'))
         api.serve(config, api_root, route_name='orb.api')
