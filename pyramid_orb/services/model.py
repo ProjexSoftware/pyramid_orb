@@ -8,8 +8,9 @@ from .restful import RestfulService
 
 class ModelService(RestfulService):
     """ Represents an individual database record """
-    def __init__(self, request, model, parent=None, record_id=None, from_collection=None, record=None):
-        super(ModelService, self).__init__(request, parent, name=str(id))
+    def __init__(self, request, model, parent=None, record_id=None, from_collection=None, record=None, name=None):
+        name = name or str(id)
+        super(ModelService, self).__init__(request, parent, name=name)
 
         # define custom properties
         self.model = model
@@ -35,8 +36,13 @@ class ModelService(RestfulService):
         # reverse lookups and pipes are collection services
         lookup = schema.pipe(key) or schema.reverseLookup(key)
         if lookup:
+            if isinstance(lookup, orb.Pipe):
+                name = lookup.name()
+            else:
+                name = lookup.reversed().name
+
             record = self.model(self.record_id, context=orb.Context(columns=['id']))
-            method = getattr(record, lookup.name, None)
+            method = getattr(record, name, None)
             if not method:
                 raise KeyError(key)
             else:
@@ -57,7 +63,7 @@ class ModelService(RestfulService):
                 from .builtins import PyObjectService
                 return PyObjectService(self.request, return_value, parent=self)
         else:
-            raise KeyError(key)
+            return ModelService(self.request, self.model, parent=self, record_id=key)
 
     @property
     def record(self):
