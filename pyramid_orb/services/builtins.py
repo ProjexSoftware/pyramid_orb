@@ -7,51 +7,51 @@ from pyramid.httpexceptions import HTTPBadRequest
 
 
 class CallableService(object):
-    def __init__(self, name, callable, method='GET', permit=None):
+    def __init__(self, name, callable, method='GET', permission=None):
         self.__name__ = name
-        self.__callable__ = callable
-        self.__method__ = method
-        self.__permit__ = permit
+        self.callable = callable
+        self.method = method
+        self.__permission = permission
 
     def __call__(self, request):
-        if self.__method__ == request.method:
-            return self.__callable__(request)
+        if self.method == request.method:
+            return self.callable(request)
         else:
             raise HTTPBadRequest()
 
     def get(self, **options):
         def setup(callable):
             name = options.pop('name', self.__name__)
-            permit = options.pop('permission', '__DEFAULT__')
-            return CallableService(name, callable, 'GET', permit)
+            permission = options.pop('permission', '__DEFAULT__')
+            return CallableService(name, callable, 'GET', permission)
         return setup
 
     def post(self, **options):
         def setup(callable):
             name = options.pop('name', self.__name__)
-            permit = options.pop('permission', '__DEFAULT__')
-            return CallableService(name, callable, 'POST', permit)
+            permission = options.pop('permission', '__DEFAULT__')
+            return CallableService(name, callable, 'POST', permission)
         return setup
 
     def delete(self, **options):
         def setup(callable):
             name = options.pop('name', self.__name__)
-            permit = options.pop('permission', '__DEFAULT__')
-            return CallableService(name, callable, 'DELETE', permit)
+            permission = options.pop('permission', '__DEFAULT__')
+            return CallableService(name, callable, 'DELETE', permission)
         return setup
 
     def put(self, **options):
         def setup(callable):
             name = options.pop('name', self.__name__)
-            permit = options.pop('permission', '__DEFAULT__')
-            return CallableService(name, callable, 'PUT', permit)
+            permission = options.pop('permission', '__DEFAULT__')
+            return CallableService(name, callable, 'PUT', permission)
         return setup
 
     def patch(self, **options):
         def setup(callable):
             name = options.pop('name', self.__name__)
-            permit = options.pop('permission', '__DEFAULT__')
-            return CallableService(name, callable, 'PATCH', permit)
+            permission = options.pop('permission', '__DEFAULT__')
+            return CallableService(name, callable, 'PATCH', permission)
         return setup
 
 class ModuleService(AbstractService):
@@ -63,7 +63,7 @@ class ModuleService(AbstractService):
         for callable in vars(module).values():
             if isinstance(callable, CallableService):
                 self.callables.setdefault(callable.__name__, {})
-                self.callables[callable.__name__][callable.__method__] = callable
+                self.callables[callable.__name__][callable.method] = callable
 
     def __getitem__(self, key):
         if key in self.callables:
@@ -80,23 +80,23 @@ class ModuleService(AbstractService):
         else:
             # check to see if we're looking for help
             if 'help' in self.request.params:
-                docgen = getattr(callable.__callable__, 'help', None)
+                docgen = getattr(callable.__callable, 'help', None)
                 if docgen:
                     return {'message': docgen(self.request)}
                 else:
-                    return {'message': re.sub('\w\x08', '', render_doc(callable.__callable__))}
+                    return {'message': re.sub('\w\x08', '', render_doc(callable.__callable))}
 
             return callable(self.request)
 
-    def permit(self):
+    def permission(self):
         name = self.request.path.strip('/').split('/')[-1]
         try:
             callable = self.callables[name][self.request.method]
         except KeyError:
             return None
         else:
-            default = super(ModuleService, self).permit()
-            return callable.__permit__ if callable.__permit__ != '__DEFAULT__' else default
+            default = super(ModuleService, self).permission()
+            return callable.__permission if callable.__permission != '__DEFAULT__' else default
 
 
 class ClassService(AbstractService):
@@ -108,7 +108,7 @@ class ClassService(AbstractService):
         for callable in vars(self.instance).values():
             if isinstance(callable, RestfulService):
                 self.callables.setdefault(callable.__name__, {})
-                self.callables[callable.__name__][callable.__method__] = callable
+                self.callables[callable.__name__][callable.method] = callable
 
     def __getitem__(self, key):
         if key in self.callables:
@@ -125,11 +125,11 @@ class ClassService(AbstractService):
         else:
             # check to see if we're looking for help
             if 'help' in self.request.params:
-                docgen = getattr(callable.__callable__, 'help', None)
+                docgen = getattr(callable.__callable, 'help', None)
                 if docgen:
                     return {'message': docgen(self.request)}
                 else:
-                    return {'message': re.sub('\w\x08', '', render_doc(callable.__callable__))}
+                    return {'message': re.sub('\w\x08', '', render_doc(callable.__callable))}
 
             return callable()
 

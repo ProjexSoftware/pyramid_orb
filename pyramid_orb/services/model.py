@@ -1,7 +1,7 @@
 import orb
 
 from orb import Query as Q
-from pyramid.httpexceptions import HTTPBadRequest
+from pyramid.httpexceptions import HTTPBadRequest, HTTPForbidden
 from pyramid_orb.utils import collect_params, get_context, collect_query_info
 from .restful import RestfulService
 
@@ -33,8 +33,8 @@ class ModelService(RestfulService):
             else:
                 raise KeyError(key)
 
-        # reverse lookups and pipes are collection services
-        lookup = schema.pipe(key) or schema.reverseLookup(key)
+        # generate collector services
+        lookup = schema.collector(key)
         if lookup:
             if isinstance(lookup, orb.Pipe):
                 name = lookup.name()
@@ -52,8 +52,9 @@ class ModelService(RestfulService):
 
         # lookup regular method
         method = getattr(self.model, key, None)
-        if method:
-            return_value = method(context=get_context(self.request, model=self.model))
+        if method and self.request.method == 'GET':
+            record = self.__record or self.model(self.record_id)
+            return_value = method(record)
             if isinstance(return_value, orb.Collection):
                 from .collection import CollectionService
                 return CollectionService(self.request, return_value, parent=self, name=key)

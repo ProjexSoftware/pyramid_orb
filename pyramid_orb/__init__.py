@@ -17,6 +17,7 @@ __version__ = '{0}.{1}.{2}'.format(*__version_info__)
 
 import orb
 
+from .decorators import *
 
 def includeme(config):
     # define a new renderer for json
@@ -48,7 +49,7 @@ def includeme(config):
     api_root = settings.get('orb.api.root')
 
     if api_root:
-        from .api import ApiFactory
+        from .rest import ApiFactory
 
         api = ApiFactory(version=settings.get('orb.api.version', '1.0.0'))
         api.serve(config, api_root, route_name='orb.api')

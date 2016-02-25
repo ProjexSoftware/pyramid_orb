@@ -50,7 +50,8 @@ def get_context(request, model=None, params=None):
         'start': int(params.pop('start', 0)) or None,
         'limit': int(params.pop('limit', 0)) or None,
         'page': int(params.pop('page', 0)) or None,
-        'pageSize': int(params.pop('pageSize', 0)) or None
+        'pageSize': int(params.pop('pageSize', 0)) or None,
+        'scope': {'request': request}
     }
 
     # extract JSON lookup commands (using the orb javascript library for frontend querying)

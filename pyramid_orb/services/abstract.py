@@ -35,5 +35,5 @@ class AbstractService(dict):
     def process(self):
         raise NotImplementedError
 
-    def permit(self):
+    def permission(self):
         return self.request.method.lower() + '.' + '.'.join(self.request.traversed)
