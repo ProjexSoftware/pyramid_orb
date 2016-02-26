@@ -51,20 +51,20 @@ class CollectionService(OrbService):
 
     def permission(self):
         method = self.request.method.lower()
-        acl = getattr(self.model, '__auth__')
-        if callable(acl):
-            return acl(self.request)
-        elif isinstance(acl, dict):
+        auth = getattr(self.model, '__auth__')
+        if callable(auth):
+            return auth(self.request)
+        elif isinstance(auth, dict):
             try:
-                method_acl = acl[method]
+                method_auth = auth[method]
             except KeyError:
                 raise HTTPForbidden()
             else:
-                if callable(method_acl):
-                    return method_acl(self.request)
+                if callable(method_auth):
+                    return method_auth(self.request)
                 else:
-                    return method_acl
-        elif isinstance(acl, (list, tuple, set)):
-            return method in acl
+                    return method_auth
+        elif isinstance(auth, (list, tuple, set)):
+            return method in auth
         else:
-            return acl
+            return auth

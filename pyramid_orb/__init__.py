@@ -33,7 +33,7 @@ def register(config, modules=None, scope=None):
 
 def includeme(config):
     config.include('pyramid_restful')
-    
+
     # define a new renderer for json
     settings = config.registry.settings
 
@@ -59,7 +59,6 @@ def includeme(config):
 
     # create the API factory
     api_root = settings.get('orb.api.root')
-
     if api_root:
         from .api import OrbApiFactory
 
