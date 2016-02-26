@@ -66,7 +66,8 @@ setup(
     install_requires=[
         'projex',
         'orb-api',
-        'pyramid'
+        'pyramid',
+        'pyramid_restful'
     ],
     cmdclass={
         'tag': tag

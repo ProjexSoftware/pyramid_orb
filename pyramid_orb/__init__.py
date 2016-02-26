@@ -16,13 +16,25 @@ __version_info__ = (__major__, __minor__, __revision__)
 __version__ = '{0}.{1}.{2}'.format(*__version_info__)
 
 import orb
+import projex
 
-from .decorators import *
+def register(config, modules=None, scope=None):
+    scope = scope or {}
+    if modules:
+        # import the database models
+        projex.importmodules(modules)
+
+    # expose all of the models to the API
+    for name, model in orb.system.models().items():
+        scope[name] = model
+
+        if hasattr(model, '__auth__'):
+            config.registry.rest_api.register(model)
 
 def includeme(config):
+    config.include('pyramid_restful')
+    
     # define a new renderer for json
-    config.add_renderer('json2', factory='pyramid_orb.renderer.json2_renderer_factory')
-
     settings = config.registry.settings
 
     # create the database conneciton
@@ -49,10 +61,10 @@ def includeme(config):
     api_root = settings.get('orb.api.root')
 
     if api_root:
-        from .rest import ApiFactory
+        from .api import OrbApiFactory
 
-        api = ApiFactory(version=settings.get('orb.api.version', '1.0.0'))
+        api = OrbApiFactory(version=settings.get('orb.api.version', '1.0.0'))
         api.serve(config, api_root, route_name='orb.api')
 
         # store the API instance on the configuration
-        config.registry.api = api
+        config.registry.rest_api = api

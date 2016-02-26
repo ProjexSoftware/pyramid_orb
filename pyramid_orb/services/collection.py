@@ -1,8 +1,9 @@
-from .restful import RestfulService
+from .orbservice import OrbService
+from pyramid.httpexceptions import HTTPForbidden
 from pyramid_orb.utils import collect_params, collect_query_info, get_context
 
 
-class CollectionService(RestfulService):
+class CollectionService(OrbService):
     def __init__(self, request, collection, parent=None, name=None):
         super(CollectionService, self).__init__(request=request, parent=parent, name=name)
 
@@ -48,3 +49,22 @@ class CollectionService(RestfulService):
         context = get_context(self.request)
         return self.collection.create(values, context=context)
 
+    def permission(self):
+        method = self.request.method.lower()
+        acl = getattr(self.model, '__auth__')
+        if callable(acl):
+            return acl(self.request)
+        elif isinstance(acl, dict):
+            try:
+                method_acl = acl[method]
+            except KeyError:
+                raise HTTPForbidden()
+            else:
+                if callable(method_acl):
+                    return method_acl(self.request)
+                else:
+                    return method_acl
+        elif isinstance(acl, (list, tuple, set)):
+            return method in acl
+        else:
+            return acl
