@@ -22,7 +22,7 @@ def register(config, modules=None, scope=None):
     scope = scope or {}
     if modules:
         # import the database models
-        projex.importmodules(modules)
+        projex.importmodules(modules, silent=False)
 
     # expose all of the models to the API
     for name, model in orb.system.models().items():

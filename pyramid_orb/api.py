@@ -1,6 +1,4 @@
-import inspect
 import orb
-import projex.text
 
 from pyramid_restful.api import ApiFactory
 from .services import ModelService

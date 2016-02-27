@@ -58,7 +58,7 @@ setup(
     maintainer='Eric Hulser',
     maintainer_email='eric.hulser@gmail.com',
     description='Bindings for the pyramid webframework and the ORB database ORM library.',
-    license='LGPL',
+    license='MIT',
     keywords='',
     url='https://github.com/ProjexSoftware/pyramid_orb',
     include_package_data=True,
