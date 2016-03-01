@@ -62,7 +62,10 @@ def includeme(config):
     if api_root:
         from .api import OrbApiFactory
 
-        api = OrbApiFactory(version=settings.get('orb.api.version', '1.0.0'))
+        api = OrbApiFactory(
+            application=settings.get('orb.api.application', 'ORB'),
+            version=settings.get('orb.api.version', '1.0.0')
+        )
         api.serve(config, api_root, route_name='orb.api')
 
         # store the API instance on the configuration
