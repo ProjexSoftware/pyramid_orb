@@ -2,7 +2,7 @@ import orb
 
 from orb import Query as Q
 from pyramid.httpexceptions import HTTPBadRequest, HTTPForbidden
-from pyramid_orb.utils import collect_params, get_context, collect_query_info
+from pyramid_orb.utils import get_context
 from .orbservice import OrbService
 
 
@@ -36,18 +36,19 @@ class ModelService(OrbService):
         # generate collector services
         lookup = schema.collector(key)
         if lookup:
-            if isinstance(lookup, orb.Pipe):
-                name = lookup.name()
-            else:
-                name = lookup.reversed().name
-
+            name = lookup.name()
             record = self.model(self.record_id, context=orb.Context(columns=['id']))
             method = getattr(record, name, None)
             if not method:
                 raise KeyError(key)
             else:
                 from .collection import CollectionService
-                records = method(context=get_context(self.request))
+                values, context = get_context(self.request, model=self.model)
+                if values:
+                    where = orb.Query.build(values)
+                    context.where = where & context.where
+
+                records = method(context=context)
                 return CollectionService(self.request, records, parent=self)
 
         # lookup regular method
@@ -66,29 +67,24 @@ class ModelService(OrbService):
         else:
             return ModelService(self.request, self.model, parent=self, record_id=key)
 
-    @property
-    def record(self):
-        if self.__record is not None:
-            return self.__record
-        elif self.record_id is None:
-            raise HTTPBadRequest()
-
-        context = get_context(self.request)
-        return self.model(self.record_id, context=context)
-
     def _update(self):
-        record = self.record
-        values = collect_params(self.request)
+        values, context = get_context(self.request, model=self.model)
+        record = self.model(self.record_id, context=context)
         record.update(values)
         record.save()
         return record.__json__()
 
     def get(self):
-        if self.record_id:
-            return self.record.__json__()
+        values, context = get_context(self.request, model=self.model)
+        if context.returning == 'schema':
+            return self.model.schema()
+        elif self.record_id:
+            return self.model(self.record_id, **context)
         else:
-            info = collect_query_info(self.model, self.request)
-            return self.model.select(**info)
+            if values:
+                where = orb.Query.build(values)
+                context.where = where & context.where
+            return self.model.select(context=context)
 
     def patch(self):
         if self.record_id:
@@ -100,9 +96,9 @@ class ModelService(OrbService):
         if self.record_id:
             raise HTTPBadRequest()
         else:
-            values = collect_params(self.request)
-            context = get_context(self.request)
-            return self.model.create(values, context=context).__json__()
+            values, context = get_context(self.request, model=self.model)
+            record = self.model.create(values, context=context)
+            return record.__json__()
 
     def put(self):
         if self.record_id:
@@ -112,7 +108,7 @@ class ModelService(OrbService):
 
     def delete(self):
         if self.record_id:
-            context = get_context(self.request)
+            values, context = get_context(self.request, model=self.model)
             if self.from_collection:
                 return self.from_collection.remove(self.record_id, context=context)
             else:

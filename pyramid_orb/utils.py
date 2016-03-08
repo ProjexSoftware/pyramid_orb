@@ -1,10 +1,9 @@
 import orb
 
-from orb import Query as Q
 from projex.text import safe_eval
 
 
-def collect_params(request):
+def get_param_values(request):
     if type(request) == dict:
         return request
 
@@ -27,55 +26,32 @@ def collect_params(request):
     return {k.rstrip('[]'): extract(k, v) for k, v in params.items()}
 
 
-def get_context(request, model=None, params=None):
-    if params is None:
-        params = collect_params(request)
+def get_context(request, model=None):
+    param_values = get_param_values(request)
+
+    context = orb.Context(**param_values.pop('context', {}))
+
+    # build up context information from the request params
+    query_context = {}
+    for key in orb.Context.Defaults:
+        if key in param_values:
+            query_context[key] = param_values.pop(key)
 
     # generate a simple query object
+    values = {}
     if model:
-        q_build = {col: params.pop(col) for col in params.keys() if model.schema().column(col, raise_=False)}
-    else:
-        q_build = None
+        for key in param_values:
+            col = model.schema().column(key, raise_=False)
+            if col:
+                values[key] = param_values.pop(key)
+            else:
+                coll = model.schema().collector(key)
+                if coll:
+                    values[key] = param_values.pop(key)
 
-
-    context_options = {
-        'inflated': params.pop('inflated', 'True') == 'True',
-        'locale': params.pop('locale', None),
-        'timezone': params.pop('timezone', None),
-        'columns': params.pop('columns').split(',') if 'columns' in params else None,
-        'where': Q.build(q_build) if q_build else None,
-        'order': params.pop('order', params.pop('orderBy', None)) or None,
-        'expand': params.pop('expand').split(',') if 'expand' in params else None,
-        'returning': params.pop('returning', None),
-        'start': int(params.pop('start', 0)) or None,
-        'limit': int(params.pop('limit', 0)) or None,
-        'page': int(params.pop('page', 0)) or None,
-        'pageSize': int(params.pop('pageSize', 0)) or None,
-        'scope': {'request': request}
+    query_context['scope'] = {
+        'request': request
     }
 
-    # extract JSON lookup commands (using the orb javascript library for frontend querying)
-    lookup = params.pop('lookup', None)
-    if lookup:
-        context_options.update(lookup)
-
-    return orb.Context(**context_options)
-
-
-def collect_query_info(model, request):
-    """
-    Processes the inputted request object for search terms and parameters.
-
-    :param      request | <pyramid.request.Request>
-
-    :return     (<orb.Context>, <str> search terms, <dict> original options)
-    """
-    params = collect_params(request)
-
-    # returns the lookup, database options, search terms and original options
-    output = {
-        'terms': params.pop('terms', ''),
-        'context': get_context(request, model=model, params=params)
-    }
-    output.update(params)
-    return output
+    context.update(query_context)
+    return values, context

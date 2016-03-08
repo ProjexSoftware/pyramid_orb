@@ -149,6 +149,23 @@ class OrbApiFactory(ApiFactory):
             for group_name, section in super(OrbApiFactory, self).collect_documentation(name, service_info):
                 yield group_name, section
 
+    def process(self, request):
+        # return the schemas for this API
+        if not request.traversed and \
+            request.method.lower() == 'get' and \
+            'application/json' in request.accept and \
+            request.params.get('returning') == 'schema':
+            schemas = [s.__json__() for s in sorted(orb.system.schemas().values(), key=lambda x: x.name())]
+            output = {}
+            for schema in schemas:
+                dbname = schema['dbname']
+                schema['urlRoot'] = request.host_url + request.path.rstrip('/') + '/' + dbname
+                output[dbname] = schema
+            return output
+        else:
+            return super(OrbApiFactory, self).process(request)
+
+
     def register(self, service, name=''):
         """
         Exposes a given service to this API.

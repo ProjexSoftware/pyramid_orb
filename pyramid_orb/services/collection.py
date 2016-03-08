@@ -1,6 +1,8 @@
-from .orbservice import OrbService
+import orb
+
 from pyramid.httpexceptions import HTTPForbidden
-from pyramid_orb.utils import collect_params, collect_query_info, get_context
+from pyramid_orb.utils import get_context
+from .orbservice import OrbService
 
 
 class CollectionService(OrbService):
@@ -31,22 +33,18 @@ class CollectionService(OrbService):
                                 from_collection=self.collection)
 
     def get(self):
-        info = collect_query_info(self.model, self.request)
-        return self.collection.refine(**info)
+        values, context = get_context(self.request, model=self.model)
+        if values:
+            where = orb.Query.build(values)
+            context.where = where & context.where
+        return self.collection.refine(context=context)
 
     def put(self):
-        try:
-            values = self.request.json_body
-            if type(values) == list:
-                values = {'records': values}
-        except StandardError:
-            values = collect_params(self.request)
-
-        return self.collection.update(values)
+        values, context = get_context(self.request, model=self.model)
+        return self.collection.update(values, context=context)
 
     def post(self):
-        values = collect_params(self.request)
-        context = get_context(self.request)
+        values, context = get_context(self.request, model=self.model)
         return self.collection.create(values, context=context)
 
     def permission(self):
