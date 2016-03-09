@@ -79,7 +79,7 @@ class ModelService(OrbService):
         if context.returning == 'schema':
             return self.model.schema()
         elif self.record_id:
-            return self.model(self.record_id, **context)
+            return self.model(self.record_id, context=context)
         else:
             if values:
                 where = orb.Query.build(values)
