@@ -49,7 +49,7 @@ class CollectionService(OrbService):
 
     def permission(self):
         method = self.request.method.lower()
-        auth = getattr(self.model, '__auth__')
+        auth = getattr(self.model, '__auth__', None)
         if callable(auth):
             return auth(self.request)
         elif isinstance(auth, dict):
