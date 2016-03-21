@@ -51,21 +51,8 @@ class ModelService(OrbService):
                 records = method(context=context)
                 return CollectionService(self.request, records, parent=self)
 
-        # lookup regular method
-        method = getattr(self.model, key, None)
-        if method and self.request.method == 'GET':
-            record = self.__record or self.model(self.record_id)
-            return_value = method(record)
-            if isinstance(return_value, orb.Collection):
-                from .collection import CollectionService
-                return CollectionService(self.request, return_value, parent=self, name=key)
-            elif isinstance(return_value, orb.Model):
-                return ModelService(self.request, parent=self, record=return_value)
-            else:
-                from .builtins import PyObjectService
-                return PyObjectService(self.request, return_value, parent=self)
-        else:
-            return ModelService(self.request, self.model, parent=self, record_id=key)
+        # otherwise, return a model based on the id
+        return ModelService(self.request, self.model, parent=self, record_id=key)
 
     def _update(self):
         values, context = get_context(self.request, model=self.model)
