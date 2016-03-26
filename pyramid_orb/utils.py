@@ -40,7 +40,7 @@ def get_context(request, model=None):
     # generate a simple query object
     values = {}
     if model:
-        for key in param_values:
+        for key, value in param_values.items():
             col = model.schema().column(key, raise_=False)
             if col:
                 values[key] = param_values.pop(key)
