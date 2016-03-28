@@ -49,9 +49,16 @@ def get_context(request, model=None):
                 if coll:
                     values[key] = param_values.pop(key)
 
+    # generate the base context information
     query_context['scope'] = {
         'request': request
     }
+
+    # include any request specific scoping information
+    try:
+        query_context['scope'].update(request.orb_scope)
+    except KeyError:
+        pass
 
     context.update(query_context)
     return values, context
