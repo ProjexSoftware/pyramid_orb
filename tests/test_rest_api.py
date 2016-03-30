@@ -103,3 +103,12 @@ def test_expand_user_from_address(db, schema, bob, main_street, pyramid_app):
     r = pyramid_app.get('/api/v1/addresses/{0}'.format(main_street.id()), params='expand=user')
     assert_equals(r.json['user'], bob, columns=['id', 'username'])
     assert 'password' not in r.json['user']
+
+def test_get_user_from_address(db, schema, bob, main_street, pyramid_app):
+    r = pyramid_app.get('/api/v1/addresses/{0}/user'.format(main_street.id()))
+    assert_equals(r.json, bob, columns=['id', 'username'])
+    assert 'password' not in r.json
+
+def test_get_invalid_path_from_address(db, schema, bob, main_street, pyramid_app):
+    r = pyramid_app.get('/api/v1/addresses/{0}/blah'.format(main_street.id()), expect_errors=True)
+    assert r.status_code == 410
