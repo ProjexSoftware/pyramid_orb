@@ -155,7 +155,7 @@ class OrbApiFactory(ApiFactory):
             request.method.lower() == 'get' and \
             'application/json' in request.accept and \
             request.params.get('returning') == 'schema':
-            schemas = [s.__json__() for s in sorted(orb.system.schemas().values(), key=lambda x: x.name()) if hasattr(s.model(), '__resource__')]
+            schemas = [s.__json__() for s in sorted(orb.system.schemas().values(), key=lambda x: x.name()) if getattr(s.model(), '__resource__', False)]
             output = {}
             for schema in schemas:
                 dbname = schema['dbname']
