@@ -7,20 +7,11 @@ ORB database mapping system and the pyramid web framework.
 Installation
 -----------------------
 
-If you would like to use the latest build that has been tested and published,
-you can use the Python `setuptools` to install it to your computer or virtual
-environment:
-
-    $ easy_install pyramid_orb
-
-If you would like to use the latest code base, you can clone the repository
-and reference your `PYTHONPATH` to the checkout location, or make a build
-of the code by using the `projex.xbuild` system:
-
-    $ cd /path/to/git/pyramid_orb
-    $ python /path/to/projex/scripts/xbuild.py ./pyramid_orb.xbuild
+    pip install pyramid_orb
 
 Documentation
 -----------------------
 
-Coming soon.
+Documentation is a part of the global ORB framework docs, hosted on GitBook.com.
+
+For specific ORB-Pyramid integration, [refer to this section on pyramid_orb](https://orb-framework.gitbooks.io/orb/content/integrations/pyramid.html).

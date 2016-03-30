@@ -28,7 +28,7 @@ def register(config, modules=None, scope=None):
     for name, model in orb.system.models().items():
         scope[name] = model
 
-        if hasattr(model, '__auth__'):
+        if getattr(model, '__resource__', False):
             config.registry.rest_api.register(model)
 
 def includeme(config):

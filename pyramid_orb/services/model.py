@@ -3,7 +3,7 @@ import orb
 from orb import Query as Q
 from pyramid.httpexceptions import HTTPBadRequest, HTTPForbidden
 from pyramid_orb.utils import get_context
-from .orbservice import OrbService
+from pyramid_orb.service import OrbService
 
 
 class ModelService(OrbService):
@@ -99,15 +99,19 @@ class ModelService(OrbService):
             if self.from_collection:
                 return self.from_collection.remove(self.record_id, context=context)
             else:
-                return self.record.delete(context=context)
+                record = self.model(self.record_id, context=context)
+                record.delete()
+                return record
         else:
             raise HTTPBadRequest()
 
     def permission(self):
         method = self.request.method.lower()
-        auth = getattr(self.model, '__auth__')
+        auth = getattr(self.model, '__auth__', None)
+
         if callable(auth):
             return auth(self.request)
+
         elif isinstance(auth, dict):
             try:
                 method_auth = auth[method]
@@ -118,7 +122,9 @@ class ModelService(OrbService):
                     return method_auth(self.request)
                 else:
                     return method_auth
+
         elif isinstance(auth, (list, tuple, set)):
             return method in auth
+
         else:
             return auth

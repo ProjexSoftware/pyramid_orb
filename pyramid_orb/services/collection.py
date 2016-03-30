@@ -2,7 +2,7 @@ import orb
 
 from pyramid.httpexceptions import HTTPForbidden
 from pyramid_orb.utils import get_context
-from .orbservice import OrbService
+from pyramid_orb.service import OrbService
 
 
 class CollectionService(OrbService):
@@ -13,24 +13,17 @@ class CollectionService(OrbService):
         self.collection = collection
 
     def __getitem__(self, key):
-        # look for a view
-        view_collection = self.collection.view(key)
-        if view_collection is not None:
-            return CollectionService(self.request, view_collection, parent=self)
+        try:
+            record_id = int(key)
+        except ValueError:
+            record_id = key
 
-        # look for a record
-        else:
-            try:
-                record_id = int(key)
-            except ValueError:
-                record_id = key
-
-            from .model import ModelService
-            return ModelService(self.request,
-                                self.model,
-                                record_id=record_id,
-                                parent=self,
-                                from_collection=self.collection)
+        from .model import ModelService
+        return ModelService(self.request,
+                            self.model,
+                            record_id=record_id,
+                            parent=self,
+                            from_collection=self.collection)
 
     def get(self):
         values, context = get_context(self.request, model=self.model)
@@ -44,14 +37,20 @@ class CollectionService(OrbService):
         return self.collection.update(values, context=context)
 
     def post(self):
-        values, context = get_context(self.request, model=self.model)
+        if self.collection.pipe():
+            values, context = get_context(self.request, model=self.collection.pipe().throughModel())
+        else:
+            values, context = get_context(self.request, model=self.model)
+
         return self.collection.create(values, context=context)
 
     def permission(self):
         method = self.request.method.lower()
         auth = getattr(self.model, '__auth__', None)
+
         if callable(auth):
             return auth(self.request)
+
         elif isinstance(auth, dict):
             try:
                 method_auth = auth[method]
@@ -62,7 +61,9 @@ class CollectionService(OrbService):
                     return method_auth(self.request)
                 else:
                     return method_auth
+
         elif isinstance(auth, (list, tuple, set)):
             return method in auth
+
         else:
             return auth
