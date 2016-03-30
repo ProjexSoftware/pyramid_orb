@@ -150,21 +150,21 @@ class OrbApiFactory(ApiFactory):
                 yield group_name, section
 
     def process(self, request):
-        # return the schemas for this API
+        # return the schema information for this API
         if not request.traversed and \
             request.method.lower() == 'get' and \
             'application/json' in request.accept and \
             request.params.get('returning') == 'schema':
-            schemas = [s.__json__() for s in sorted(orb.system.schemas().values(), key=lambda x: x.name())]
+            schemas = [s.__json__() for s in sorted(orb.system.schemas().values(), key=lambda x: x.name()) if hasattr(s.model(), '__resource__')]
             output = {}
             for schema in schemas:
                 dbname = schema['dbname']
                 schema['urlRoot'] = request.path.rstrip('/') + '/' + dbname
                 output[dbname] = schema
             return output
+
         else:
             return super(OrbApiFactory, self).process(request)
-
 
     def register(self, service, name=''):
         """
@@ -177,7 +177,7 @@ class OrbApiFactory(ApiFactory):
 
         # expose an ORB table dynamically as a service
         if is_model:
-            self._ApiFactory__services[service.schema().dbname()] = (ModelService, service)
+            self.services[service.schema().dbname()] = (ModelService, service)
 
         else:
             super(OrbApiFactory, self).register(service, name=name)

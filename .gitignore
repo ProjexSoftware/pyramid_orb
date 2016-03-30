@@ -11,3 +11,7 @@ pyramid_orb.egg-info
 dist
 _version.py
 .bak
+.coverage
+report.html
+testing.db
+htmlcov

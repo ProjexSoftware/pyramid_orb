@@ -57,7 +57,7 @@ def get_context(request, model=None):
     # include any request specific scoping information
     try:
         query_context['scope'].update(request.orb_scope)
-    except KeyError:
+    except AttributeError:
         pass
 
     context.update(query_context)
