@@ -159,7 +159,7 @@ class OrbApiFactory(ApiFactory):
             output = {}
             for schema in schemas:
                 dbname = schema['dbname']
-                schema['urlRoot'] = request.path.rstrip('/') + '/' + dbname
+                schema['urlRoot'] = request.host_url + request.path.rstrip('/') + '/' + dbname
                 output[dbname] = schema
             return output
         else:
