@@ -14,10 +14,6 @@ def test_get_user_by_id(db, bob, pyramid_app):
     assert_equals(r.json, bob, columns=['id', 'username'])
     assert 'password' not in r.json
 
-def test_group_users_not_exposed(db, pyramid_app):
-    r = pyramid_app.get('/api/v1/group_users', expect_errors=True)
-    assert r.status_code == 404
-
 def test_get_all_users(db, schema, pyramid_app):
     r = pyramid_app.get('/api/v1/users')
     assert len(r.json) == len(schema['User'].all())
@@ -25,11 +21,6 @@ def test_get_all_users(db, schema, pyramid_app):
 def test_get_user_by_username(db, schema, pyramid_app):
     r = pyramid_app.get('/api/v1/users', params='username=bob')
     assert len(r.json) == 1
-
-def test_get_invalid_user(db, schema, pyramid_app):
-    r = pyramid_app.get('/api/v1/users/-1', expect_errors=True)
-    assert r.json['type'] == 'record_not_found'
-    assert r.status_code == 410
 
 def test_create_sally(db, schema, pyramid_app):
     r = pyramid_app.post('/api/v1/users', params='username=sally&password=pass123')
@@ -40,12 +31,17 @@ def test_change_sally_to_sarah(db, schema, pyramid_app):
     r = pyramid_app.get('/api/v1/users', params='username=sally')
     s = r.json[0]
     id = s['id']
-    r = pyramid_app.put('/api/v1/users/{0}'.format(id), params='username=sarah')
+
+    r = pyramid_app.put('/api/v1/users/{0}'.format(id), params={'username': 'sarah'})
     assert r.json['id'] == id
     assert r.json['username'] == 'sarah'
 
-def test_delete_sarah(db, schema, pyramid_app):
-    r = pyramid_app.get('/api/v1/users', params='username=sarah')
+    r = pyramid_app.patch('/api/v1/users/{0}'.format(id), params={'username': 'sally'})
+    assert r.json['id'] == id
+    assert r.json['username'] == 'sally'
+
+def test_delete_sally(db, schema, pyramid_app):
+    r = pyramid_app.get('/api/v1/users', params={'username': 'sally'})
     s = r.json[0]
     id = s['id']
 
@@ -83,6 +79,10 @@ def test_expand_addresses(db, schema, bob, main_street, pyramid_app):
     address = r.json['addresses'][0]
     assert_equals(address, main_street)
 
+def test_filter_addresses(db, schema, bob, pyramid_app):
+    r = pyramid_app.get('/api/v1/users/{0}/addresses'.format(bob.id()), params={'state': 'USA'})
+    assert len(r.json) == 1
+
 def test_create_new_address_through_scoping(db, schema, bob, with_scope, pyramid_app):
     r = pyramid_app.post('/api/v1/addresses', params='street=123 Second St.&city=LA&state=CA&zipcode=54321')
     assert r.json['id'] is not None
@@ -109,6 +109,40 @@ def test_get_user_from_address(db, schema, bob, main_street, pyramid_app):
     assert_equals(r.json, bob, columns=['id', 'username'])
     assert 'password' not in r.json
 
-def test_get_invalid_path_from_address(db, schema, bob, main_street, pyramid_app):
-    r = pyramid_app.get('/api/v1/addresses/{0}/blah'.format(main_street.id()), expect_errors=True)
-    assert r.status_code == 410
+def test_get_address_by_user(db, schema, bob, pyramid_app):
+    r = pyramid_app.get('/api/v1/users/{0}/addresses'.format(bob.id()), params={'state': 'USA'})
+    assert len(r.json) == 1
+
+def test_get_paged_users(db, schema, pyramid_app):
+    r = pyramid_app.get('/api/v1/users', params={'paged': True, 'page': 1, 'pageSize': 100})
+    headers = r.headers
+
+    assert len(r.json) == 1
+    assert headers['X-Orb-Page'] == '1'
+    assert headers['X-Orb-Page-Size'] == '100'
+    assert headers['X-Orb-Start'] == '0'
+    assert headers['X-Orb-Limit'] == '100'
+    assert headers['X-Orb-Page-Count'] == '1'
+    assert headers['X-Orb-Total-Count'] == '1'
+
+def test_add_address_to_user(db, schema, bob, pyramid_app):
+    import projex.rest
+    r = pyramid_app.get('/api/v1/users/{0}/addresses'.format(bob.id()))
+
+    new_record = schema['Address'].create({
+        'street': '567 Fourth St.',
+        'city': 'Somehere',
+        'state': 'CA',
+        'zipcode': 123455
+    })
+
+    addresses = r.json
+    addresses.append(new_record.__json__())
+
+    r = pyramid_app.put_json('/api/v1/users/{0}/addresses'.format(bob.id()), params={'records': addresses})
+    assert r.status_code == 200
+
+def test_validate_user_schema(db, schema, pyramid_app):
+    import orb
+    r = pyramid_app.get('/api/v1/users', params={'returning': 'schema'})
+    assert len(r.json['columns']) == len(schema['User'].schema().columns(flags=~orb.Column.Flags.Private))

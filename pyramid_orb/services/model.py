@@ -43,13 +43,17 @@ class ModelService(OrbService):
                 raise KeyError(key)
             else:
                 from .collection import CollectionService
-                values, context = get_context(self.request, model=self.model)
+                values, context = get_context(self.request, model=lookup.model())
                 if values:
                     where = orb.Query.build(values)
                     context.where = where & context.where
 
                 records = method(context=context)
                 return CollectionService(self.request, records, parent=self)
+
+        # make sure we're not trying to load a property we don't have
+        elif self.record_id:
+            raise KeyError(key)
 
         # otherwise, return a model based on the id
         return ModelService(self.request, self.model, parent=self, record_id=key)
