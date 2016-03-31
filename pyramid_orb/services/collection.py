@@ -1,6 +1,6 @@
 import orb
 
-from pyramid.httpexceptions import HTTPForbidden
+from pyramid.httpexceptions import HTTPForbidden, HTTPBadRequest
 from pyramid_orb.utils import get_context
 from pyramid_orb.service import OrbService
 
@@ -33,8 +33,19 @@ class CollectionService(OrbService):
         return self.collection.refine(context=context)
 
     def put(self):
-        values, context = get_context(self.request, model=self.model)
-        return self.collection.update(values, context=context)
+        _, context = get_context(self.request, model=self.model)
+
+        try:
+            params = self.request.json_body
+        except StandardError:
+            params = self.request.params
+
+        try:
+            records = [self.model(record) for record in params['records']]
+        except KeyError:
+            raise HTTPBadRequest()
+        else:
+            return self.collection.update(records, context=context)
 
     def post(self):
         if self.collection.pipe():
