@@ -1,6 +1,6 @@
 import orb
 
-from pyramid.httpexceptions import HTTPForbidden, HTTPBadRequest
+from pyramid.httpexceptions import HTTPForbidden, HTTPBadRequest, HTTPNotFound
 from pyramid_orb.utils import get_context
 from pyramid_orb.service import OrbService
 
@@ -9,14 +9,20 @@ class CollectionService(OrbService):
     def __init__(self, request, collection, parent=None, name=None):
         super(CollectionService, self).__init__(request=request, parent=parent, name=name)
 
-        self.model = collection.model()
         self.collection = collection
+        if isinstance(collection, orb.Collection):
+            self.model = collection.model()
+        else:
+            self.model = None
 
     def __getitem__(self, key):
         try:
             record_id = int(key)
         except ValueError:
             record_id = key
+
+        if self.model is None:
+            raise HTTPNotFound()
 
         from .model import ModelService
         return ModelService(self.request,
@@ -26,13 +32,19 @@ class CollectionService(OrbService):
                             from_collection=self.collection)
 
     def get(self):
-        values, context = get_context(self.request, model=self.model)
-        if values:
-            where = orb.Query.build(values)
-            context.where = where & context.where
-        return self.collection.refine(context=context)
+        if self.model is not None:
+            values, context = get_context(self.request, model=self.model)
+            if values:
+                where = orb.Query.build(values)
+                context.where = where & context.where
+            return self.collection.refine(context=context)
+        else:
+            return self.collection
 
     def put(self):
+        if self.model is None:
+            raise HTTPBadRequest()
+
         _, context = get_context(self.request, model=self.model)
 
         try:
@@ -48,6 +60,9 @@ class CollectionService(OrbService):
             return self.collection.update(records, context=context)
 
     def post(self):
+        if self.model is None:
+            raise HTTPBadRequest()
+
         if self.collection.pipe():
             values, context = get_context(self.request, model=self.collection.pipe().throughModel())
         else:

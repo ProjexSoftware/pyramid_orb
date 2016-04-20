@@ -37,8 +37,12 @@ class ModelService(OrbService):
         lookup = schema.collector(key)
         if lookup:
             name = lookup.name()
-            record = self.model(self.record_id, context=orb.Context(columns=['id']))
-            method = getattr(record, name, None)
+            if not lookup.testFlag(lookup.Flags.Static):
+                record = self.model(self.record_id, context=orb.Context(columns=['id']))
+                method = getattr(record, name, None)
+            else:
+                method = getattr(self.model, name, None)
+
             if not method:
                 raise KeyError(key)
             else:
