@@ -18,6 +18,9 @@ __version__ = '{0}.{1}.{2}'.format(*__version_info__)
 import orb
 import projex
 
+from . import utils
+
+
 def register(config, modules=None, scope=None):
     scope = scope or {}
     if modules:
@@ -36,6 +39,9 @@ def includeme(config):
 
     # define a new renderer for json
     settings = config.registry.settings
+
+    # set the max limit when desired
+    utils.DEFAULT_MAX_LIMIT = int(settings.pop('orb.settings.default_max_limit', utils.DEFAULT_MAX_LIMIT))
 
     # create the database conneciton
     db_type = settings.get('orb.db.type')

@@ -1,6 +1,9 @@
 import orb
+import projex.rest
 
 from projex.text import safe_eval
+
+DEFAULT_MAX_LIMIT = 1000
 
 
 def get_param_values(request):
@@ -28,8 +31,13 @@ def get_param_values(request):
 
 def get_context(request, model=None):
     param_values = get_param_values(request)
+    context = param_values.pop('context', {})
+    if isinstance(context, (unicode, str)):
+        context = projex.rest.unjsonify(context)
 
-    context = orb.Context(**param_values.pop('context', {}))
+    has_limit = 'limit' in context or 'limit' in param_values
+
+    context = orb.Context(**context)
 
     # build up context information from the request params
     query_context = {}
@@ -61,4 +69,8 @@ def get_context(request, model=None):
         pass
 
     context.update(query_context)
+
+    if not has_limit and context.returning == 'records':
+        context.limit = DEFAULT_MAX_LIMIT
+
     return values, context
