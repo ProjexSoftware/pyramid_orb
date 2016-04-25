@@ -1,4 +1,5 @@
 import orb
+import projex.text
 
 from orb import Query as Q
 from pyramid.httpexceptions import HTTPBadRequest, HTTPForbidden
@@ -145,3 +146,24 @@ class ModelService(OrbService):
 
         else:
             return auth
+
+    @classmethod
+    def routes(cls, obj):
+        root = obj.schema().dbname()
+        output = {
+            '/{0}'.format(root): 'get,post',
+            '/{0}/{{id}}'.format(root): 'delete,put'
+        }
+
+        for collector in obj.schema().collectors().values():
+            model = collector.model()
+            if model:
+                rev_type = projex.text.underscore(model.schema().name())
+            else:
+                rev_type = 'model'
+
+            collector_path = '/{0}/{{id}}/{1}'.format(root, collector.name())
+            output[collector_path] = 'get,post'
+            output[collector_path + '/{{{0}:id}}'.format(rev_type)] = 'delete,put'
+
+        return output

@@ -93,3 +93,7 @@ class CollectionService(OrbService):
 
         else:
             return auth
+
+    @classmethod
+    def routes(cls, obj):
+        return {}

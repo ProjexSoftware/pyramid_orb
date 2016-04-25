@@ -150,11 +150,12 @@ class OrbApiFactory(ApiFactory):
                 yield group_name, section
 
     def process(self, request):
+        is_root = bool(not request.traversed)
+        is_json = 'application/json' in request.accept
+        is_get = request.method.lower() == 'get'
+        returning = request.params.get('returning')
         # return the schema information for this API
-        if not request.traversed and \
-            request.method.lower() == 'get' and \
-            'application/json' in request.accept and \
-            request.params.get('returning') == 'schema':
+        if is_root and is_json and is_get and returning == 'schema':
             schemas = [s.__json__() for s in sorted(orb.system.schemas().values(), key=lambda x: x.name()) if getattr(s.model(), '__resource__', False)]
             output = {}
             for schema in schemas:
