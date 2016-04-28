@@ -18,8 +18,7 @@ class OrbService(object):
         except AttributeError:
             raise HTTPNotFound()
         else:
-            permit = self.permission()
-            if permit and not self.request.has_permission(permit):
+            if not self.permitted():
                 raise HTTPForbidden()
             else:
                 output = func()
@@ -40,5 +39,5 @@ class OrbService(object):
                 else:
                     return output
 
-    def permission(self):
-        return None
+    def permitted(self):
+        return True

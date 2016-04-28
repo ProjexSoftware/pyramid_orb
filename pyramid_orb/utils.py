@@ -15,6 +15,13 @@ def get_param_values(request):
     except ValueError:
         params = dict(request.params)
 
+    # support in-place editing formatted request
+    if 'pk' in params:
+        pk = params.pop('pk')
+        editable_name = params.pop('name')
+        editable_value = params.pop('value')
+        params[editable_name] = editable_value
+
     try:
         params.setdefault('id', int(request.matchdict['id']))
     except KeyError:
@@ -31,7 +38,7 @@ def get_param_values(request):
 
 def get_context(request, model=None):
     param_values = get_param_values(request)
-    context = param_values.pop('context', {})
+    context = param_values.pop('orb_context', {})
     if isinstance(context, (unicode, str)):
         context = projex.rest.unjsonify(context)
 

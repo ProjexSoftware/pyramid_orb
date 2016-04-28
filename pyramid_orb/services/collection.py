@@ -53,11 +53,23 @@ class CollectionService(OrbService):
             params = self.request.params
 
         try:
-            records = [self.model(record) for record in params['records']]
+            records = params['records']
         except KeyError:
             raise HTTPBadRequest()
         else:
-            return self.collection.update(records, context=context)
+            update_records = []
+
+            # create any records that need creating first
+            for record in records:
+                if isinstance(record, dict):
+                    record = self.model.create(record, context=context)
+                else:
+                    record = self.model(record)
+
+                update_records.append(record)
+
+            # update the collection with the new records
+            return self.collection.update(update_records, context=context)
 
     def post(self):
         if self.model is None:
@@ -70,12 +82,12 @@ class CollectionService(OrbService):
 
         return self.collection.create(values, context=context)
 
-    def permission(self):
+    def permitted(self):
         method = self.request.method.lower()
         auth = getattr(self.model, '__auth__', None)
 
         if callable(auth):
-            return auth(self.request)
+            return auth(scope={'request': self.request})
 
         elif isinstance(auth, dict):
             try:
@@ -85,14 +97,19 @@ class CollectionService(OrbService):
             else:
                 if callable(method_auth):
                     return method_auth(self.request)
+                elif method_auth:
+                    return self.request.has_permission(method_auth)
                 else:
-                    return method_auth
+                    return True
 
         elif isinstance(auth, (list, tuple, set)):
             return method in auth
 
+        elif auth:
+            return self.request.has_permission(auth)
+
         else:
-            return auth
+            return True
 
     @classmethod
     def routes(cls, obj):

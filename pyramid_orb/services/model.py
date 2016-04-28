@@ -123,12 +123,12 @@ class ModelService(OrbService):
         else:
             raise HTTPBadRequest()
 
-    def permission(self):
+    def permitted(self):
         method = self.request.method.lower()
         auth = getattr(self.model, '__auth__', None)
 
         if callable(auth):
-            return auth(self.request)
+            return auth(scope={'request': self.request})
 
         elif isinstance(auth, dict):
             try:
@@ -138,21 +138,26 @@ class ModelService(OrbService):
             else:
                 if callable(method_auth):
                     return method_auth(self.request)
+                elif method_auth:
+                    return self.request.has_permission(method_auth)
                 else:
-                    return method_auth
+                    return True
 
         elif isinstance(auth, (list, tuple, set)):
             return method in auth
 
+        elif auth:
+            return self.request.has_permission(auth)
+
         else:
-            return auth
+            return True
 
     @classmethod
     def routes(cls, obj):
         root = obj.schema().dbname()
         output = {
             '/{0}'.format(root): 'get,post',
-            '/{0}/{{id}}'.format(root): 'delete,put'
+            '/{0}/{{id}}'.format(root): 'get,patch,put,delete'
         }
 
         for collector in obj.schema().collectors().values():
@@ -163,7 +168,7 @@ class ModelService(OrbService):
                 rev_type = 'model'
 
             collector_path = '/{0}/{{id}}/{1}'.format(root, collector.name())
-            output[collector_path] = 'get,post'
-            output[collector_path + '/{{{0}:id}}'.format(rev_type)] = 'delete,put'
+            output[collector_path] = 'get,post,put'
+            output[collector_path + '/{{{0}:id}}'.format(rev_type)] = 'get,delete'
 
         return output
