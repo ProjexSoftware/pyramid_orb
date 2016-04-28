@@ -53,7 +53,7 @@ class CollectionService(OrbService):
             params = self.request.params
 
         try:
-            records = params['records']
+            records = (params.get('records') or params.get('ids') or '').split(',')
         except KeyError:
             raise HTTPBadRequest()
         else:
@@ -64,7 +64,7 @@ class CollectionService(OrbService):
                 if isinstance(record, dict):
                     record = self.model.create(record, context=context)
                 else:
-                    record = self.model(record)
+                    record = self.model(record, context=context)
 
                 update_records.append(record)
 
