@@ -39,7 +39,8 @@ class ModelService(OrbService):
         if lookup:
             name = lookup.name()
             if not lookup.testFlag(lookup.Flags.Static):
-                record = self.model(self.record_id, context=orb.Context(columns=['id']))
+                _, context = get_context(self.request, model=self.model)
+                record = self.model(self.record_id, context=context)
                 method = getattr(record, name, None)
             else:
                 method = getattr(self.model, name, None)

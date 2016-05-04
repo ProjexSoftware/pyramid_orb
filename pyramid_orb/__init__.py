@@ -52,6 +52,10 @@ def includeme(config):
         db.setPassword(settings.get('orb.db.password'))
         db.setHost(settings.get('orb.db.host'))
         db.setPort(settings.get('orb.db.port'))
+        try:
+            db.setTimeout(eval(settings.get('orb.db.timeout')))
+        except StandardError:
+            pass
         db.activate()
         db.connect()
 

@@ -53,23 +53,15 @@ class CollectionService(OrbService):
             params = self.request.params
 
         try:
-            records = (params.get('records') or params.get('ids') or '').split(',')
+            records = params.get('records') or params.get('ids') or ''
         except KeyError:
             raise HTTPBadRequest()
         else:
-            update_records = []
-
-            # create any records that need creating first
-            for record in records:
-                if isinstance(record, dict):
-                    record = self.model.create(record, context=context)
-                else:
-                    record = self.model(record, context=context)
-
-                update_records.append(record)
+            if isinstance(records, (unicode, str)):
+                records = records.split(',') if records else []
 
             # update the collection with the new records
-            return self.collection.update(update_records, context=context)
+            return self.collection.update(records, context=context)
 
     def post(self):
         if self.model is None:
