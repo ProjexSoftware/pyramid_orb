@@ -76,7 +76,9 @@ def includeme(config):
             application=settings.get('orb.api.application', 'ORB'),
             version=settings.get('orb.api.version', '1.0.0')
         )
-        api.serve(config, api_root, route_name='orb.api')
+
+        permission = settings.get('orb.api.permission')
+        api.serve(config, api_root, route_name='orb.api', permission=permission)
 
         # store the API instance on the configuration
         config.registry.rest_api = api
