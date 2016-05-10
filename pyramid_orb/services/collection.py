@@ -67,8 +67,8 @@ class CollectionService(OrbService):
         if self.model is None:
             raise HTTPBadRequest()
 
-        if self.collection.pipe():
-            values, context = get_context(self.request, model=self.collection.pipe().throughModel())
+        if isinstance(self.collection.collector(), orb.Pipe):
+            values, context = get_context(self.request, model=self.collection.collector().throughModel())
         else:
             values, context = get_context(self.request, model=self.model)
 
