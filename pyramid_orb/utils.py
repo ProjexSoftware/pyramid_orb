@@ -47,10 +47,12 @@ def get_context(request, model=None):
     context = orb.Context(**context)
 
     # build up context information from the request params
+    used = set()
     query_context = {}
     for key in orb.Context.Defaults:
         if key in param_values:
-            query_context[key] = param_values.pop(key)
+            used.add(key)
+            query_context[key] = param_values.get(key)
 
     # generate a simple query object
     values = {}
@@ -63,6 +65,8 @@ def get_context(request, model=None):
                 coll = model.schema().collector(key)
                 if coll:
                     values[key] = param_values.pop(key)
+
+    param_values = {k: v for k, v in param_values.items() if k not in used}
 
     # generate the base context information
     query_context['scope'] = {
