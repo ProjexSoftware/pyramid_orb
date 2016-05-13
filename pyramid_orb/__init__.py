@@ -43,6 +43,12 @@ def includeme(config):
     # set the max limit when desired
     utils.DEFAULT_MAX_LIMIT = int(settings.pop('orb.settings.default_max_limit', utils.DEFAULT_MAX_LIMIT))
 
+    # create the orb global settings
+    for key, value in settings.items():
+        if key.startswith('orb.settings'):
+            sub_key = key.replace('orb.settings.', '')
+            setattr(orb.system.settings(), sub_key, value)
+
     # create the database conneciton
     db_type = settings.get('orb.db.type')
     if db_type:
@@ -57,15 +63,8 @@ def includeme(config):
         except StandardError:
             pass
         db.activate()
-        db.connect()
 
         config.registry.db = db
-
-    # create the orb global settings
-    for key, value in settings.items():
-        if key.startswith('orb.settings'):
-            sub_key = key.replace('orb.settings.', '')
-            setattr(orb.system.settings(), sub_key, value)
 
     # create the API factory
     api_root = settings.get('orb.api.root')
