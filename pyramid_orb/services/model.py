@@ -2,7 +2,7 @@ import orb
 import projex.text
 
 from orb import Query as Q
-from pyramid.httpexceptions import HTTPBadRequest, HTTPForbidden
+from pyramid.httpexceptions import HTTPBadRequest, HTTPForbidden, HTTPNotFound
 from pyramid_orb.utils import get_context
 from pyramid_orb.service import OrbService
 
@@ -78,7 +78,10 @@ class ModelService(OrbService):
         if context.returning == 'schema':
             return self.model.schema()
         elif self.record_id:
-            return self.model(self.record_id, context=context)
+            try:
+                return self.model(self.record_id, context=context)
+            except orb.errors.RecordNotFound:
+                raise HTTPNotFound()
         else:
             # convert values to query parameters
             if values:
