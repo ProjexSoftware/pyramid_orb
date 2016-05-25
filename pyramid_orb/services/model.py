@@ -67,6 +67,7 @@ class ModelService(OrbService):
                 record = self.model(self.record_id, context=context)
                 method = getattr(record, name, None)
             else:
+                record = None
                 method = getattr(self.model, name, None)
 
             if not method:
@@ -78,7 +79,9 @@ class ModelService(OrbService):
                     where = orb.Query.build(values)
                     context.where = where & context.where
 
-                record.setContext(context)
+                if record:
+                    record.setContext(context)
+
                 records = method(context=context)
                 return CollectionService(self.request, records, parent=self)
 
