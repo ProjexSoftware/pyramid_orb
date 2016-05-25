@@ -32,7 +32,7 @@ class CollectionService(OrbService):
                             from_collection=self.collection)
 
     def get(self):
-        if self.model is not None:
+        if self.model is not None and not self.collection.isLoaded():
             values, context = get_context(self.request, model=self.model)
             if values:
                 where = orb.Query.build(values)

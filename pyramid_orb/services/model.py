@@ -1,3 +1,4 @@
+import logging
 import orb
 import projex.text
 
@@ -5,6 +6,18 @@ from orb import Query as Q
 from pyramid.httpexceptions import HTTPBadRequest, HTTPForbidden, HTTPNotFound
 from pyramid_orb.utils import get_context
 from pyramid_orb.service import OrbService
+
+log = logging.getLogger(__name__)
+
+
+class ValueService(OrbService):
+    def __init__(self, request, value, parent=None, name=None):
+        super(ValueService, self).__init__(request, parent, name=name)
+
+        self.__value = value
+
+    def get(self):
+        return self.__value
 
 
 class ModelService(OrbService):
@@ -29,6 +42,16 @@ class ModelService(OrbService):
             if isinstance(col, orb.ReferenceColumn):
                 record_id = self.model.select(where=Q(self.model) == self.record_id, limit=1).values(col.name())[0]
                 return ModelService(self.request, col.referenceModel(), record_id=record_id)
+
+            # return the response information
+            elif self.record_id:
+                self.request.context = self
+                if not self.permitted():
+                    raise HTTPForbidden()
+                else:
+                    _, context = get_context(self.request, model=self.model)
+                    record = self.model(self.record_id, context=context)
+                    return ValueService(self.request, record.get(col))
 
             # columns are not directly accessible
             else:
