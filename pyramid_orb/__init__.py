@@ -71,9 +71,17 @@ def includeme(config):
     if api_root:
         from .api import OrbApiFactory
 
+        # setup cross-origin support
+        cors_options = {
+            k.replace('orb.api.cors.', ''): v
+            for k, v in settings.items()
+            if k.startswith('orb.api.cors.')
+        }
+
         api = OrbApiFactory(
             application=settings.get('orb.api.application', 'ORB'),
-            version=settings.get('orb.api.version', '1.0.0')
+            version=settings.get('orb.api.version', '1.0.0'),
+            cors_options=cors_options or None
         )
 
         permission = settings.get('orb.api.permission')
