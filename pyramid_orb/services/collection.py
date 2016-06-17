@@ -68,7 +68,13 @@ class CollectionService(OrbService):
             raise HTTPBadRequest()
 
         if isinstance(self.collection.collector(), orb.Pipe):
-            values, context = get_context(self.request, model=self.collection.collector().throughModel())
+            through_model = self.collection.collector().throughModel()
+            target_model = self.collection.collector().toModel()
+
+            # check if the values provided are for the middle-table
+            values, context = get_context(self.request, model=through_model)
+            if not values:
+                values, conext = get_context(self.request, model=target_model)
         else:
             values, context = get_context(self.request, model=self.model)
 

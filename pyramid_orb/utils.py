@@ -66,8 +66,6 @@ def get_context(request, model=None):
                 if coll:
                     values[key] = param_values.pop(key)
 
-    param_values = {k: v for k, v in param_values.items() if k not in used}
-
     # generate the base context information
     query_context['scope'] = {
         'request': request
