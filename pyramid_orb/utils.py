@@ -16,7 +16,7 @@ def get_payload(request):
     """
     # extract the request payload
     try:
-        return request.json_body.mixed()
+        return request.json_body
     except ValueError:
         return request.params.mixed()
 
