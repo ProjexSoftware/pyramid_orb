@@ -5,46 +5,70 @@ from projex.text import safe_eval
 
 DEFAULT_MAX_LIMIT = 1000
 
+def get_payload(request):
+    """
+    Extracts the request's payload information.  This will check both
+    the JSON body and the main body.
 
-def get_param_values(request):
+    :param request: <pyramid.request.Request>
+
+    :return: <dict>
+    """
+    # extract the request payload
+    try:
+        return request.json_body.mixed()
+    except ValueError:
+        return request.params.mixed()
+
+
+def get_param_values(request, model=None):
+    """
+    Converts the request parameters to Python.
+
+    :param request: <pyramid.request.Request> || <dict>
+
+    :return: <dict>
+    """
     if type(request) == dict:
         return request
 
-    try:
-        params = dict(request.json_body)
-    except ValueError:
-        params = dict(request.params)
+    params = get_payload(request)
 
     # support in-place editing formatted request
-    if 'pk' in params:
-        pk = params.pop('pk')
-        editable_name = params.pop('name')
-        editable_value = params.pop('value')
-        params[editable_name] = editable_value
-
     try:
-        params.setdefault('id', int(request.matchdict['id']))
+        del params['pk']
+        params[params.pop('name')] = params.pop('value')
     except KeyError:
         pass
 
-    def extract(k, v):
-        if k.endswith('[]'):
-            return [safe_eval(v) for v in request.params.getall(k)]
-        else:
-            return safe_eval(v)
-
-    return {k.rstrip('[]'): extract(k, v) for k, v in params.items()}
+    return {
+        k.rstrip('[]'): safe_eval(v) if not type(v) == list else [safe_eval(sv) for sv in v]
+        for k, v in params.items()
+    }
 
 
 def get_context(request, model=None):
-    param_values = get_param_values(request)
+    """
+    Extracts ORB context information from the request.
+
+    :param request: <pyramid.request.Request>
+    :param model: <orb.Model> || None
+
+    :return: {<str> key: <variant> value} values, <orb.Context>
+    """
+    # convert request parameters to python
+    param_values = get_param_values(request, model=model)
+
+    # extract the full orb context if provided
     context = param_values.pop('orb_context', {})
     if isinstance(context, (unicode, str)):
         context = projex.rest.unjsonify(context)
 
+    # otherwise, extract the limit information
     has_limit = 'limit' in context or 'limit' in param_values
 
-    context = orb.Context(**context)
+    # create the new orb context
+    orb_context = orb.Context(**context)
 
     # build up context information from the request params
     used = set()
@@ -55,16 +79,21 @@ def get_context(request, model=None):
             query_context[key] = param_values.get(key)
 
     # generate a simple query object
-    values = {}
+    schema_values = {}
     if model:
+        # extract match dict items
+        for key, value in request.matchdict.items():
+            if model.schema().column(key, raise_=False):
+                schema_values[key] = value
+
+        # extract payload items
         for key, value in param_values.items():
-            col = model.schema().column(key, raise_=False)
-            if col:
-                values[key] = param_values.pop(key)
-            else:
-                coll = model.schema().collector(key)
-                if coll:
-                    values[key] = param_values.pop(key)
+            schema_object = model.schema().column(key, raise_=False) or model.schema().collector(key)
+            if schema_object:
+                value = param_values.pop(key)
+                if isinstance(schema_object, orb.Collector) and type(value) not in (tuple, list):
+                    value = [value]
+                schema_values[key] = value
 
     # generate the base context information
     query_context['scope'] = {
@@ -77,9 +106,10 @@ def get_context(request, model=None):
     except AttributeError:
         pass
 
-    context.update(query_context)
+    orb_context.update(query_context)
 
-    if not has_limit and context.returning == 'records':
-        context.limit = DEFAULT_MAX_LIMIT
+    # set the default limit if none is provided
+    if not has_limit and orb_context.returning == 'records':
+        orb_context.limit = DEFAULT_MAX_LIMIT
 
-    return values, context
+    return schema_values, orb_context
