@@ -7,6 +7,8 @@ from pyramid.httpexceptions import HTTPBadRequest, HTTPForbidden, HTTPNotFound
 from pyramid_orb.utils import get_context
 from pyramid_orb.service import OrbService
 
+from ..action import iter_actions
+
 log = logging.getLogger(__name__)
 
 
@@ -31,6 +33,8 @@ class ModelService(OrbService):
         self.record_id = record_id
         self.__record = record
         self.from_collection = from_collection
+
+        self.actions = self.collect_actions_from_model(model)
 
     def __getitem__(self, key):
         schema = self.model.schema()
@@ -97,7 +101,13 @@ class ModelService(OrbService):
         record = self.model(self.record_id, context=context)
         record.update(values)
         record.save()
-        return record.__json__()
+        return record
+
+    def collect_actions_from_model(self, model):
+        actions = {}
+        for action, func in iter_actions(model):
+            actions[(action.name, action.method)] = func
+        return actions
 
     def get(self):
         values, context = get_context(self.request, model=self.model)
@@ -105,9 +115,15 @@ class ModelService(OrbService):
             return self.model.schema()
         elif self.record_id:
             try:
-                return self.model(self.record_id, context=context)
+                record = self.model(self.record_id, context=context)
             except orb.errors.RecordNotFound:
                 raise HTTPNotFound()
+            action = self.get_action()
+            if record is not None and action is not None:
+                return action(record, self.request)
+            else:
+                return record
+
         else:
             # convert values to query parameters
             if values:
@@ -124,7 +140,12 @@ class ModelService(OrbService):
 
     def patch(self):
         if self.record_id:
-            return self._update()
+            record = self._update()
+            action = self.get_action()
+            if action:
+                action(record, self.request)
+            else:
+                return record.__json__()
         else:
             raise HTTPBadRequest()
 
@@ -133,12 +154,22 @@ class ModelService(OrbService):
             raise HTTPBadRequest()
         else:
             values, context = get_context(self.request, model=self.model)
-            record = self.model.create(values, context=context)
-            return record.__json__()
+            action = self.get_action()
+            if action:
+                record = self.model(values, context=context)
+                return action(record, self.request)
+            else:
+                record = self.model.create(values, context=context)
+                return record.__json__()
 
     def put(self):
         if self.record_id:
-            return self._update()
+            record = self._update()
+            action = self.get_action()
+            if action:
+                return action(record, self.request)
+            else:
+                return record
         else:
             raise HTTPBadRequest()
 
@@ -146,11 +177,16 @@ class ModelService(OrbService):
         if self.record_id:
             values, context = get_context(self.request, model=self.model)
             if self.from_collection:
-                return self.from_collection.remove(self.record_id, context=context)
+                return self.from_collection.remove(self.record_id,
+                                                   context=context)
             else:
                 record = self.model(self.record_id, context=context)
-                record.delete()
-                return record
+                action = self.get_action()
+                if action:
+                    return action(record, self.request)
+                else:
+                    record.delete()
+                    return record
         else:
             raise HTTPBadRequest()
 
@@ -203,3 +239,11 @@ class ModelService(OrbService):
             output[collector_path + '/{{{0}:id}}'.format(rev_type)] = 'get,delete'
 
         return output
+
+    def get_action(self):
+        for key, value in self.request.params.items():
+            if key == 'action':
+                action_id = (value, self.request.method.lower())
+                if action_id in self.actions:
+                    return self.actions[action_id]
+        return None
