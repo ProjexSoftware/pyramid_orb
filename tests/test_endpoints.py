@@ -49,8 +49,8 @@ def test_delete_sally(db, schema, pyramid_app):
     assert r.json['id'] is None
 
     r = pyramid_app.get('/api/v1/users/{0}'.format(id), expect_errors=True)
-    assert r.status_code == 410
-    assert r.json['type'] == 'record_not_found'
+    assert r.status_code == 404
+    assert r.json['type'] == 'httpnot_found'
 
 def test_add_group_to_bob(db, schema, bob, admins, pyramid_app):
     r = pyramid_app.post('/api/v1/users/{0}/groups'.format(bob.id()), params={'group_id':admins.id()})

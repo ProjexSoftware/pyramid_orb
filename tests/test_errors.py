@@ -2,8 +2,8 @@ import pytest
 
 def test_get_invalid_user(db, schema, pyramid_app):
     r = pyramid_app.get('/api/v1/users/-1', expect_errors=True)
-    assert r.json['type'] == 'record_not_found'
-    assert r.status_code == 410
+    assert r.json['type'] == 'httpnot_found'
+    assert r.status_code == 404
 
 def test_invalid_patch_on_root(db, schema, pyramid_app):
     r = pyramid_app.patch('/api/v1/users', expect_errors=True)
@@ -33,8 +33,4 @@ def test_get_invalid_path_from_address(db, schema, bob, main_street, pyramid_app
 
 def test_group_users_not_exposed(db, pyramid_app):
     r = pyramid_app.get('/api/v1/group_users', expect_errors=True)
-    assert r.status_code == 404
-
-def test_cannot_select_non_reference_column(db, schema, bob, pyramid_app):
-    r = pyramid_app.get('/api/v1/users/{0}/username'.format(bob.id()), expect_errors=True)
     assert r.status_code == 404
