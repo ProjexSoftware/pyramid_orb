@@ -126,18 +126,24 @@ class ModelService(OrbService):
                 return record
 
         else:
-            # convert values to query parameters
-            if values:
-                where = orb.Query.build(values)
-                context.where = where & context.where
 
-            # grab search terms or query
-            search_terms = self.request.params.get('terms') or self.request.params.get('q')
+            action = self.get_model_action()
+            if action:
+                return action(self.request)
 
-            if search_terms:
-                return self.model.search(search_terms, context=context)
             else:
-                return self.model.select(context=context)
+                # convert values to query parameters
+                if values:
+                    where = orb.Query.build(values)
+                    context.where = where & context.where
+
+                # grab search terms or query
+                search_terms = self.request.params.get('terms') or self.request.params.get('q')
+
+                if search_terms:
+                    return self.model.search(search_terms, context=context)
+                else:
+                    return self.model.select(context=context)
 
     def patch(self):
         if self.record_id:
