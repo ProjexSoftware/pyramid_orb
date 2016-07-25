@@ -1,3 +1,7 @@
+orb-api>=2016
+pyramid_restful>=2016
+
+pyparsing==2.1.5
 pyyaml==3.11
 pytz==2015.7
 
@@ -5,3 +9,4 @@ pytest==2.6.4
 pytest-cov==2.2.0
 pytest-html==1.7
 pytest-ordering==0.4
+pytest_pyramid==0.2.0

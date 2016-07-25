@@ -52,23 +52,6 @@ class tag(Command):
         else:
             print 'warning: tagging ignored...'
 
-class PyTest(TestCommand):
-    user_options = [('pytest-args=', 'a', 'Arguments to pass to py.test')]
-
-    def initialize_options(self):
-        TestCommand.initialize_options(self)
-        self.default_options = ['tests/']
-        self.pytest_args = []
-
-    def finalize_options(self):
-        TestCommand.finalize_options(self)
-        self.test_args = []
-        self.test_suite = True
-
-    def run_tests(self):
-        import pytest
-        errno = pytest.main(self.default_options)
-        sys.exit(errno)
 
 setup(
     name='pyramid_orb',
@@ -90,10 +73,8 @@ setup(
         'pyramid_restful'
     ],
     cmdclass={
-        'tag': tag,
-        'test': PyTest
+        'tag': tag
     },
-    tests_require=[],
     long_description='Bindings for the pyramid webframework and the ORB database ORM library.',
     classifiers=[],
 )
