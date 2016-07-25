@@ -7,6 +7,7 @@ from pyramid.httpexceptions import HTTPBadRequest, HTTPForbidden, HTTPNotFound
 from pyramid_orb.utils import get_context
 from pyramid_orb.service import OrbService
 
+from ..action import Action
 from ..action import iter_actions
 
 log = logging.getLogger(__name__)
@@ -106,7 +107,7 @@ class ModelService(OrbService):
     def collect_actions_from_model(self, model):
         actions = {}
         for action, func in iter_actions(model):
-            actions[(action.name, action.method)] = func
+            actions[action] = func
         return actions
 
     def get(self):
@@ -118,7 +119,7 @@ class ModelService(OrbService):
                 record = self.model(self.record_id, context=context)
             except orb.errors.RecordNotFound:
                 raise HTTPNotFound()
-            action = self.get_action()
+            action = self.get_record_action()
             if record is not None and action is not None:
                 return action(record, self.request)
             else:
@@ -141,7 +142,7 @@ class ModelService(OrbService):
     def patch(self):
         if self.record_id:
             record = self._update()
-            action = self.get_action()
+            action = self.get_record_action()
             if action:
                 action(record, self.request)
             else:
@@ -154,10 +155,12 @@ class ModelService(OrbService):
             raise HTTPBadRequest()
         else:
             values, context = get_context(self.request, model=self.model)
-            action = self.get_action()
+            action = self.get_model_action()
             if action:
-                record = self.model(values, context=context)
-                return action(record, self.request)
+                # Since we're running a post, there is no record instance
+                # to pass to action. Post actions should always be
+                # classmethods.
+                return action(self.request)
             else:
                 record = self.model.create(values, context=context)
                 return record.__json__()
@@ -165,7 +168,7 @@ class ModelService(OrbService):
     def put(self):
         if self.record_id:
             record = self._update()
-            action = self.get_action()
+            action = self.get_record_action()
             if action:
                 return action(record, self.request)
             else:
@@ -181,7 +184,7 @@ class ModelService(OrbService):
                                                    context=context)
             else:
                 record = self.model(self.record_id, context=context)
-                action = self.get_action()
+                action = self.get_record_action()
                 if action:
                     return action(record, self.request)
                 else:
@@ -240,10 +243,19 @@ class ModelService(OrbService):
 
         return output
 
-    def get_action(self):
+    def get_model_action(self):
+        return self.get_action(True)
+
+    def get_record_action(self):
+        return self.get_action(False)
+
+    def get_action(self, model_action):
         for key, value in self.request.params.items():
             if key == 'action':
-                action_id = (value, self.request.method.lower())
-                if action_id in self.actions:
-                    return self.actions[action_id]
+                action = Action(name=value,
+                                method=self.request.method.lower(),
+                                model_action=model_action)
+
+                if action in self.actions:
+                    return self.actions[action]
         return None
