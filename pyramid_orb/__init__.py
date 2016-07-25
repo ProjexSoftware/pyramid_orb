@@ -18,7 +18,6 @@ __version__ = '{0}.{1}.{2}'.format(*__version_info__)
 import orb
 import projex
 
-from .action import action
 from . import utils
 
 

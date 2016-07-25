@@ -24,6 +24,7 @@ def logged_in(logged_out):
 @pytest.fixture()
 def schema():
     import orb
+    from pyramid_orb.action import action
 
     class User(orb.Table):
         __resource__ = True
@@ -36,6 +37,32 @@ def schema():
         addresses = orb.ReverseLookup(from_column='Address.user')
 
         byUsername = orb.Index(columns=['username'], flags={'Unique'})
+
+        @classmethod
+        @action(method='get')
+        def run(cls, request):
+            return 'user run model'
+
+        @action(method='get', name='run')
+        def run_record(self, request):
+            return 'user run record'
+
+        @classmethod
+        @action(method='post', name='exec')
+        def run_post_model(self, request):
+            return 'user exec post model'
+
+        @action(method='delete', name='run')
+        def run_delete(self, request):
+            return 'user run delete record'
+
+        @action(method='patch', name='run')
+        def run_patch(self, request):
+            return 'user run patch record'
+
+        @action(method='put', name='run')
+        def run_put(self, request):
+            return 'user run put record'
 
     class Address(orb.Table):
         __resource__ = True
@@ -67,6 +94,7 @@ def schema():
         user = orb.ReferenceColumn(reference='User')
 
     return {'Group': Group, 'User': User, 'GroupUser': GroupUser, 'Address': Address}
+
 
 @pytest.fixture()
 def api(pyramid_config, schema):

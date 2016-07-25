@@ -150,7 +150,7 @@ class ModelService(OrbService):
             record = self._update()
             action = self.get_record_action()
             if action:
-                action(record, self.request)
+                return action(record, self.request)
             else:
                 return record.__json__()
         else:
