@@ -4,4 +4,5 @@ python:
 install:
   - "pip install -r requirements-test.txt"
   - "python setup.py develop"
+  - "git branch"
 script: "py.test tests"
