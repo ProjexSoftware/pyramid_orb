@@ -60,30 +60,24 @@ class ModelService(OrbService):
         # generate collector services
         lookup = schema.collector(key)
         if lookup:
-            name = lookup.name()
             if not lookup.testFlag(lookup.Flags.Static):
                 _, context = get_context(self.request, model=self.model)
                 context.where = None
                 record = self.model(self.record_id, context=context)
-                method = getattr(record, name, None)
             else:
-                record = None
-                method = getattr(self.model, name, None)
+                record = self.model
 
-            if not method:
-                raise KeyError(key)
-            else:
-                from .collection import CollectionService
-                values, context = get_context(self.request, model=lookup.model())
-                if values:
-                    where = orb.Query.build(values)
-                    context.where = where & context.where
+            from .collection import CollectionService
+            values, context = get_context(self.request, model=lookup.model())
+            if values:
+                where = orb.Query.build(values)
+                context.where = where & context.where
 
-                if record:
-                    record.setContext(context)
+            if isinstance(record, orb.Model):
+                record.setContext(context)
 
-                records = method(context=context)
-                return CollectionService(self.request, records, parent=self)
+            records = lookup(record, context=context)
+            return CollectionService(self.request, records, parent=self)
 
         # make sure we're not trying to load a property we don't have
         elif self.record_id:
