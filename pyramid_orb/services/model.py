@@ -180,7 +180,8 @@ class ModelService(OrbService):
         if self.record_id:
             values, context = get_context(self.request, model=self.model)
             if self.from_collection:
-                return self.from_collection.remove(self.record_id,
+                record = self.model(self.record_id)
+                return self.from_collection.remove(record,
                                                    context=context)
             else:
                 record = self.model(self.record_id, context=context)
