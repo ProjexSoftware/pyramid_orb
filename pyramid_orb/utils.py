@@ -100,11 +100,27 @@ def get_context(request, model=None):
         'request': request
     }
 
-    # include any request specific scoping information
+    # include any request specific scoping or information from the request
+    # first, look for default ORB context for all requests
     try:
-        query_context['scope'].update(request.orb_scope)
+        default_context = request.orb_default_context
+
+    # then, look for scope specific information for all requests
     except AttributeError:
-        pass
+        try:
+            query_context['scope'].update(request.orb_scope)
+        except AttributeError:
+            pass
+
+    # if request specific context defaults exist, then
+    # merge them with the rest of the query context
+    else:
+        if 'scope' in default_context:
+            query_context['scope'].update(default_context.pop('scope'))
+
+        # setup defaults based on the request
+        for k, v in default_context.items():
+            query_context.setdefault(k, v)
 
     orb_context.update(query_context)
 
