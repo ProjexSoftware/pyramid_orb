@@ -33,7 +33,7 @@ class OrbService(object):
                         self.request.response.headers['X-Orb-Start'] = str(context.start)
                         self.request.response.headers['X-Orb-Limit'] = str(context.limit)
                         self.request.response.headers['X-Orb-Page-Count'] = str(output.pageCount())
-                        self.request.response.headers['X-Orb-Total-Count'] = str(output.count(page=None, limit=None))
+                        self.request.response.headers['X-Orb-Total-Count'] = str(output.count(page=None, pageSize=None))
 
                     return output
                 else:
