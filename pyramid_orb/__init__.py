@@ -57,6 +57,7 @@ def includeme(config):
         db.setUsername(settings.get('orb.db.user'))
         db.setPassword(settings.get('orb.db.password'))
         db.setHost(settings.get('orb.db.host'))
+        db.setWriteHost(settings.get('orb.db.write_host'))
         db.setPort(settings.get('orb.db.port'))
         try:
             db.setTimeout(eval(settings.get('orb.db.timeout')))
