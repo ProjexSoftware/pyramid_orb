@@ -88,7 +88,8 @@ def get_context(request, model=None):
 
         # extract payload items
         for key, value in param_values.items():
-            schema_object = model.schema().column(key, raise_=False) or model.schema().collector(key)
+            root_key = key.split('.')[0]
+            schema_object = model.schema().column(root_key, raise_=False) or model.schema().collector(root_key)
             if schema_object:
                 value = param_values.pop(key)
                 if isinstance(schema_object, orb.Collector) and type(value) not in (tuple, list):
