@@ -2,23 +2,9 @@ import orb
 import projex.rest
 
 from projex.text import safe_eval
+from pyramid_restful.utils import get_payload
 
 DEFAULT_MAX_LIMIT = 1000
-
-def get_payload(request):
-    """
-    Extracts the request's payload information.  This will check both
-    the JSON body and the main body.
-
-    :param request: <pyramid.request.Request>
-
-    :return: <dict>
-    """
-    # extract the request payload
-    try:
-        return request.json_body
-    except ValueError:
-        return request.params.mixed()
 
 
 def get_param_values(request, model=None):
