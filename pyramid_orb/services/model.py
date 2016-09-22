@@ -72,7 +72,7 @@ class ModelService(OrbService):
             if not lookup.testFlag(lookup.Flags.Static):
                 _, context = get_context(self.request, model=self.model)
                 context.where = None
-                record = self.model(self.record_id, context=context, autoload=False)
+                record = self.model(self.record_id, context=context, delay=True)
             else:
                 record = self.model
 
