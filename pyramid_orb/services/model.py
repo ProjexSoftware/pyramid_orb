@@ -45,8 +45,12 @@ class ModelService(OrbService):
         if col:
             # return a reference for the collection
             if isinstance(col, orb.ReferenceColumn):
-                record_id = self.model.select(where=Q(self.model) == self.record_id, limit=1).values(col.name())[0]
-                return ModelService(self.request, col.referenceModel(), record_id=record_id)
+                record_id = self.model.select(
+                    where=Q(self.model) == self.record_id, limit=1
+                ).values(col.name())[0]
+                return ModelService(self.request,
+                                    col.referenceModel(),
+                                    record_id=record_id)
 
             # return the response information
             elif self.record_id:
@@ -55,7 +59,7 @@ class ModelService(OrbService):
                     raise HTTPForbidden()
                 else:
                     _, context = get_context(self.request, model=self.model)
-                    record = self.model(self.record_id, context=context)
+                    record = self.model(self.record_id, context=context, delay=True)
                     return ValueService(self.request, record.get(col))
 
             # columns are not directly accessible
@@ -68,7 +72,7 @@ class ModelService(OrbService):
             if not lookup.testFlag(lookup.Flags.Static):
                 _, context = get_context(self.request, model=self.model)
                 context.where = None
-                record = self.model(self.record_id, context=context)
+                record = self.model(self.record_id, context=context, delay=True)
             else:
                 record = self.model
 
@@ -108,16 +112,18 @@ class ModelService(OrbService):
         values, context = get_context(self.request, model=self.model)
         if context.returning == 'schema':
             return self.model.schema()
+
         elif self.record_id:
             try:
                 record = self.model(self.record_id, context=context)
             except orb.errors.RecordNotFound:
                 raise HTTPNotFound()
+
             action = self.get_record_action()
             if record is not None and action is not None:
                 return action(record, self.request)
             else:
-                return record
+                return record.__json__()
 
         else:
 
