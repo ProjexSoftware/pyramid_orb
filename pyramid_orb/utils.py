@@ -1,6 +1,7 @@
 import orb
 import projex.rest
 
+from orb.core.context import DEFAULTS
 from projex.text import safe_eval
 from pyramid_restful.utils import get_payload
 
@@ -59,7 +60,7 @@ def get_context(request, model=None):
     # build up context information from the request params
     used = set()
     query_context = {}
-    for key in orb.Context.Defaults:
+    for key in DEFAULTS:
         if key in param_values:
             used.add(key)
             query_context[key] = param_values.get(key)
