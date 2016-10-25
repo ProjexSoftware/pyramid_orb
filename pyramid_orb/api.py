@@ -157,11 +157,7 @@ class OrbApiFactory(ApiFactory):
         # return the schema information for this API
         if is_root and is_json and is_get and returning == 'schema':
             schemas = [s.__json__() for s in sorted(orb.system.schemas().values(), key=lambda x: x.name()) if getattr(s.model(), '__resource__', False)]
-            output = {}
-            for schema in schemas:
-                dbname = schema['dbname']
-                schema['urlRoot'] = request.host_url + request.path.rstrip('/') + '/' + dbname
-                output[dbname] = schema
+            output = {x['dbname']: x for x in schemas}
             return output
 
         else:
