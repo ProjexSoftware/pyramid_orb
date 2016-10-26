@@ -149,19 +149,14 @@ class OrbApiFactory(ApiFactory):
             for group_name, section in super(OrbApiFactory, self).collect_documentation(name, service_info):
                 yield group_name, section
 
-    def process(self, request):
-        is_root = bool(not request.traversed)
-        is_json = 'application/json' in request.accept
-        is_get = request.method.lower() == 'get'
-        returning = request.params.get('returning')
-        # return the schema information for this API
-        if is_root and is_json and is_get and returning == 'schema':
-            schemas = [s.__json__() for s in sorted(orb.system.schemas().values(), key=lambda x: x.name()) if getattr(s.model(), '__resource__', False)]
+    def get_custom_return(self, request, returning):
+        if returning == 'schema':
+            schemas = [s.__json__() for s in sorted(orb.system.schemas().values(), key=lambda x: x.name()) if
+                       getattr(s.model(), '__resource__', False)]
             output = {x['dbname']: x for x in schemas}
             return output
-
         else:
-            return super(OrbApiFactory, self).process(request)
+            return super(OrbApiFactory, self).get_custom_return(request, returning)
 
     def register(self, service, name=''):
         """
