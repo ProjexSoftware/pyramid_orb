@@ -111,9 +111,4 @@ def get_context(request, model=None):
             query_context.setdefault(k, v)
 
     orb_context.update(query_context)
-
-    # set the default limit if none is provided
-    if not has_limit and orb_context.returning in ('records', 'data', 'values'):
-        orb_context.limit = DEFAULT_MAX_LIMIT
-
     return schema_values, orb_context
