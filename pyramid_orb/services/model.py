@@ -23,6 +23,21 @@ class ValueService(OrbService):
         return self.__value
 
 
+class OptionsService(OrbService):
+    def __init__(self, request, options={}, parent=None, name=None):
+        super(OptionsService, self).__init__(request, parent, name)
+        self._options = options
+
+    def __getitem__(self, key):
+        return self
+
+    def get(self):
+        return self._options
+
+    def options(self):
+        return self._options
+
+
 class ModelService(OrbService):
     """ Represents an individual database record """
     def __init__(self, request, model, parent=None, record_id=None, from_collection=None, record=None, name=None):
@@ -38,6 +53,9 @@ class ModelService(OrbService):
         self.actions = self.collect_actions_from_model(model)
 
     def __getitem__(self, key):
+        if self.request.method.lower() == 'options':
+            return OptionsService(self.request, parent=self, name='options')
+
         schema = self.model.schema()
 
         # lookup the articles information
